@@ -1,0 +1,27 @@
+# dev-cluster.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: test-cluster
+  region: us-west-2
+
+vpc:
+  id: "vpc-04d8fc64e8ce5cca8"
+  securityGroup: "sg-008571c1fbc3d056b"
+  subnets:
+    private:
+        us-west-2a:
+           id: "subnet-0adee3417fedb7f05"
+        us-west-2b:
+           id: "subnet-0d15606f25bd4047b"
+
+managedNodeGroups:
+  - name: defaultnodes 
+    labels: { role: workers }
+    amiFamily: AmazonLinux2023
+    ami: ami-0d893ce2c2aacefcb
+    instanceType: t3.xlarge
+    desiredCapacity: 1
+    volumeSize: 20
+    privateNetworking: true

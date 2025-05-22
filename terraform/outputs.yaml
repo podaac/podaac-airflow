@@ -1,0 +1,261 @@
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values:
+          - on-demand
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values:
+          - c6i
+          - c5
+        - key: karpenter.k8s.aws/instance-cpu
+          operator: In
+          values:
+          - "2"
+          - "4"
+config:
+  celery:
+    worker_concurrency: 16
+  logging:
+    encrypt_s3_logs: false
+    logging_level: INFO
+    remote_base_log_folder: s3://podaac-sit-services-airflowlogs
+    remote_log_conn_id: aws_default
+    remote_logging: true
+  webserver:
+    enable_proxy_fix: "True"
+createUserJob:
+  applyCustomEnv: false
+  useHelmHooks: false
+dagProcessor:
+  enabled: true
+  replicas: 3
+dags:
+  persistence:
+    enabled: true
+    existingClaim: airflow-deployed-dags
+data:
+  metadataSecretName: airflow-metadata-secret
+  resultBackendSecretName: null
+extraEnv: |
+  - name: AIRFLOW__CORE__DAGS_FOLDER
+    value: "/opt/airflow/dags"
+  - name: AIRFLOW__CORE__PLUGINS_FOLDER
+    value: "/opt/airflow/plugins"
+  - name: AIRFLOW__CORE__LAZY_LOAD_PLUGINS
+    value: "False"
+  - name: AIRFLOW__API__AUTH_BACKENDS
+    value: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+  - name: AIRFLOW__CORE__PARALLELISM
+    value: "32768"
+  - name: AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG
+    value: "1024"
+  - name: AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG
+    value: "4096"
+  - name: AIRFLOW__SCHEDULER__MAX_DAGRUNS_TO_CREATE_PER_LOOP
+    value: "256"
+  - name: AIRFLOW__SCHEDULER__SCHEDULER_HEARTBEAT_SEC
+    value: "1"
+  - name: AIRFLOW__KUBERNETES__WORKER_PODS_CREATION_BATCH_SIZE
+    value: "8"
+  - name: AIRFLOW__WEBSERVER__NAVBAR_COLOR
+    value: "#58cc35"
+  - name: AIRFLOW__WEBSERVER__INSTANCE_NAME
+    value: "Deployment: podaac-sit-services-airflow"
+  - name: AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL
+    value: "10"
+  - name: AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL
+    value: "5"
+images:
+  airflow:
+    repository: ghcr.io/unity-sds/unity-sps/sps-airflow
+    tag: 2.5.7
+labels:
+  app: airflow
+migrateDatabaseJob:
+  applyCustomEnv: false
+  jobAnnotations:
+    argocd.argoproj.io/hook: Sync
+  useHelmHooks: false
+nodeSelector:
+  karpenter.sh/nodepool: airflow-core-components
+pgbouncer:
+  enabled: true
+  replicas: 3
+postgresql:
+  enabled: false
+scheduler:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: karpenter.sh/capacity-type
+            operator: In
+            values:
+            - on-demand
+          - key: karpenter.k8s.aws/instance-family
+            operator: In
+            values:
+            - c6i
+            - c5
+          - key: karpenter.k8s.aws/instance-cpu
+            operator: In
+            values:
+            - "2"
+            - "4"
+  labels:
+    component: scheduler
+  nodeSelector:
+    karpenter.sh/nodepool: airflow-core-components
+  replicas: 3
+  topologySpreadConstraints:
+  - labelSelector:
+      matchLabels:
+        component: scheduler
+    maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - labelSelector:
+      matchLabels:
+        component: scheduler
+    maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+topologySpreadConstraints:
+- labelSelector:
+    matchLabels:
+      app: airflow
+  maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: ScheduleAnyway
+- labelSelector:
+    matchLabels:
+      app: airflow
+  maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+triggerer:
+  keda:
+    enabled: true
+    minReplicaCount: 1
+webserver:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: karpenter.sh/capacity-type
+            operator: In
+            values:
+            - on-demand
+          - key: karpenter.k8s.aws/instance-family
+            operator: In
+            values:
+            - c6i
+            - c5
+          - key: karpenter.k8s.aws/instance-cpu
+            operator: In
+            values:
+            - "2"
+            - "4"
+  defaultUser:
+    password: (sensitive value)
+    username: (sensitive value)
+  labels:
+    component: webserver
+  nodeSelector:
+    karpenter.sh/nodepool: airflow-core-components
+  replicas: 3
+  startupProbe:
+    failureThreshold: 60
+    periodSeconds: 10
+    timeoutSeconds: 20
+  topologySpreadConstraints:
+  - labelSelector:
+      matchLabels:
+        component: webserver
+    maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - labelSelector:
+      matchLabels:
+        component: webserver
+    maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+webserverSecretKeySecretName: airflow-webserver-secret
+workers:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+          - key: karpenter.sh/capacity-type
+            operator: In
+            values:
+            - spot
+        weight: 1
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: karpenter.k8s.aws/instance-family
+            operator: In
+            values:
+            - t3
+          - key: karpenter.k8s.aws/instance-cpu
+            operator: In
+            values:
+            - "2"
+            - "4"
+  extraVolumeMounts:
+  - mountPath: /shared-task-data
+    name: workers-volume
+    readOnly: false
+  extraVolumes:
+  - name: workers-volume
+    persistentVolumeClaim:
+      claimName: airflow-kpo
+  keda:
+    advanced:
+      horizontalPodAutoscalerConfig:
+        behavior:
+          scaleDown:
+            policies:
+            - periodSeconds: 5
+              type: Percent
+              value: 100
+            stabilizationWindowSeconds: 300
+          scaleUp:
+            policies:
+            - periodSeconds: 30
+              type: Percent
+              value: 900
+    enabled: true
+    maxReplicaCount: 128
+    minReplicaCount: 1
+    pollingInterval: 1
+  labels:
+    component: worker
+  nodeSelector:
+    karpenter.sh/nodepool: airflow-celery-workers
+  serviceAccount:
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::206226843404:role/podaac-sit-services-AirflowWorker
+  topologySpreadConstraints:
+  - labelSelector:
+      matchLabels:
+        component: worker
+    maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+  - labelSelector:
+      matchLabels:
+        component: worker
+    maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
