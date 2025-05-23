@@ -1,6 +1,6 @@
 
 locals {
-  resource_name_prefix = join("-", compact([var.project, var.venue, var.service_area, "%s"]))
+  resource_name_prefix = join("-", compact([var.project, var.venue, "%s"]))
   common_tags = {
     Name        = ""
     Venue       = var.venue

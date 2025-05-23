@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket               = "unity-unity-dev-bucket"
-    workspace_key_prefix = "terraform"
-    key                  = "eks.tfstate"
+    bucket               = "podaac-sit-services-airlfow"
+    workspace_key_prefix = "karpenter/tfstates"
+    key                  = "karpenter.tfstate"
     region               = "us-west-2"
     encrypt              = true
   }
