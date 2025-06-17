@@ -30,7 +30,6 @@ module "unity-sps-efs" {
   release      = var.release
 }
 
-/*
 module "unity-sps-karpenter-node-config" {
   source                 = "./modules/terraform-unity-sps-karpenter-node-config"
   project                = var.project
@@ -42,7 +41,6 @@ module "unity-sps-karpenter-node-config" {
   karpenter_node_classes = var.karpenter_node_classes
   karpenter_node_pools   = var.karpenter_node_pools
 }
-*/
 
 module "unity-sps-airflow" {
   source                     = "./modules/terraform-unity-sps-airflow"

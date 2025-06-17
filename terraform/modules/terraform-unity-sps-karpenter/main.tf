@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket               = "unity-unity-dev-bucket"
-    workspace_key_prefix = "terraform"
-    key                  = "eks.tfstate"
+    bucket               = "podaac-sit-services-airlfow"
+    workspace_key_prefix = "karpenter/tfstates"
+    key                  = "karpenter.tfstate"
     region               = "us-west-2"
     encrypt              = true
   }
@@ -18,7 +18,7 @@ module "karpenter" {
   iam_role_use_name_prefix          = false
   create_node_iam_role              = false
   node_iam_role_arn                 = data.aws_iam_role.cluster_iam_role.arn
-  iam_role_permissions_boundary_arn = data.aws_iam_policy.permissions_boundary.arn
+  #iam_role_permissions_boundary_arn = data.aws_iam_policy.permissions_boundary.arn
   enable_irsa                       = true
   irsa_oidc_provider_arn            = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_provider_url}"
   # Since the nodegroup role will already have an access entry
@@ -29,6 +29,32 @@ module "karpenter" {
     Stack     = "karpenter"
   })
 }
+
+data "aws_iam_policy_document" "policy" {
+  statement {
+    effect    = "Allow"
+    actions   = ["kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:CreateGrant",
+                "kms:DescribeKey"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "policy" {
+  name        = "karpenter-kms-policy"
+  description = "Policy to read KMS keys"
+  policy      = data.aws_iam_policy_document.policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "kms-attach" {
+  role       = module.karpenter.iam_role_name
+  policy_arn = aws_iam_policy.policy.arn
+}
+
 
 resource "helm_release" "karpenter" {
   name             = "karpenter"

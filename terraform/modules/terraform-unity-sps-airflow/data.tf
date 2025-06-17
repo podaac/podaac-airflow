@@ -32,20 +32,21 @@ data "kubernetes_namespace" "service_area" {
   }
 }
 
-/* Note: re-enable this to allow access via the JPL network
+/* Note: comment this out remove  access via the JPL network*/
 data "kubernetes_ingress_v1" "airflow_ingress" {
   metadata {
     name      = kubernetes_ingress_v1.airflow_ingress.metadata[0].name
     namespace = data.kubernetes_namespace.service_area.metadata[0].name
   }
-}*/
+}
 
+/* Note: re-enable this to allow access via the public internet
 data "kubernetes_ingress_v1" "airflow_ingress_internal" {
   metadata {
     name      = kubernetes_ingress_v1.airflow_ingress_internal.metadata[0].name
     namespace = data.kubernetes_namespace.service_area.metadata[0].name
   }
-}
+} */
 
 data "aws_db_instance" "db" {
   db_instance_identifier = var.db_instance_identifier
