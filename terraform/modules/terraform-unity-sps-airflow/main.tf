@@ -429,7 +429,7 @@ resource "helm_release" "airflow" {
   ]
 }
 
-/* Note: re-enable this to allow access via the JPL network
+/* Note: re-enable this to allow access via the JPL network */
 resource "aws_security_group" "airflow_ingress_sg" {
   name        = "${var.project}-${var.venue}-airflow-ingress-sg"
   description = "SecurityGroup for Airflow LoadBalancer ingress"
@@ -439,7 +439,7 @@ resource "aws_security_group" "airflow_ingress_sg" {
     Component = "airflow"
     Stack     = "airflow"
   })
-}*/
+}
 
 resource "aws_security_group" "airflow_ingress_sg_internal" {
   name        = "${var.project}-${var.venue}-airflow-internal-ingress-sg"
@@ -452,7 +452,7 @@ resource "aws_security_group" "airflow_ingress_sg_internal" {
   })
 }
 
-/* Note: re-enable this to allow access via the JPL network
+/* Note: re-enable this to allow access via the JPL network*/
 #tfsec:ignore:AVD-AWS-0107
 resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
   for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16"])
@@ -462,7 +462,7 @@ resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
   from_port         = local.load_balancer_port
   to_port           = local.load_balancer_port
   cidr_ipv4         = each.key
-}*/
+}
 
 data "aws_security_groups" "venue_proxy_sg" {
   filter {
@@ -485,6 +485,47 @@ resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_proxy_rule" {
   referenced_security_group_id = data.aws_security_groups.venue_proxy_sg.ids[0]
 }
 
+/* internal Access (JPL) */
+resource "kubernetes_ingress_v1" "airflow_ingress" {
+  metadata {
+    name      = "airflow-ingress"
+    namespace = data.kubernetes_namespace.service_area.metadata[0].name
+    annotations = {
+      "alb.ingress.kubernetes.io/scheme"                              = "internal"
+      "alb.ingress.kubernetes.io/target-type"                         = "ip"
+      "alb.ingress.kubernetes.io/subnets"                             = join(",", data.aws_subnets.private_application_subnets.ids)
+      "alb.ingress.kubernetes.io/listen-ports"                        = "[{\"HTTP\": ${local.load_balancer_port}}]"
+      "alb.ingress.kubernetes.io/security-groups"                     = aws_security_group.airflow_ingress_sg.id
+      "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "true"
+      "alb.ingress.kubernetes.io/healthcheck-path"                    = "/health"
+      /*"alb.ingress.kubernetes.io/certificate-arn"                     = data.aws_ssm_parameter.ssl_cert_arn.value
+      "alb.ingress.kubernetes.io/ssl-policy"                          = "ELBSecurityPolicy-TLS13-1-2-2021-06"*/
+    }
+  }
+  spec {
+    ingress_class_name = "alb"
+    rule {
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "airflow-podaac-webserver"
+              port {
+                number = 8080
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  wait_for_load_balancer = true
+  depends_on             = [helm_release.airflow]
+}
+
+/* Note: re-enable this to allow access via the public internet 
 resource "kubernetes_ingress_v1" "airflow_ingress_internal" {
   metadata {
     name      = "airflow-ingress-internal"
@@ -521,3 +562,4 @@ resource "kubernetes_ingress_v1" "airflow_ingress_internal" {
   wait_for_load_balancer = true
   depends_on             = [helm_release.airflow]
 }
+*/

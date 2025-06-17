@@ -67,7 +67,7 @@ resource "aws_db_instance" "sps_db" {
   allocated_storage    = 100
   storage_type         = "gp3"
   engine               = "postgres"
-  engine_version       = "16.4"
+  engine_version       = "16.8"
   instance_class       = "db.m5d.large"
   db_name              = "sps_db"
   username             = "db_user"
