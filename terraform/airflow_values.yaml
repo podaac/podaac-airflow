@@ -79,8 +79,8 @@ airflowVersion: "2.10.5"
 # Images
 images:
   airflow:
-    repository: ~
-    tag: ~
+    repository: ghcr.io/podaac/podaac-airflow
+    tag: latest
     # Specifying digest takes precedence over tag.
     digest: ~
     pullPolicy: IfNotPresent
