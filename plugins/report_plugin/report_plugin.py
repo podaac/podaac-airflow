@@ -6,6 +6,7 @@ from flask_appbuilder import expose
 from airflow.models.dagrun import DagRun
 from airflow.models.taskinstance import TaskInstance
 from airflow.utils.session import provide_session
+from airflow.configuration import conf
 
 import ast
 import re
@@ -18,8 +19,8 @@ bp = Blueprint(
     template_folder="templates"  # Must match your folder structure
 )
 
-# Set this to your Airflow base log folder (adjust if different)
-BASE_LOG_FOLDER = "/opt/airflow/logs"
+# Retrieve the Airflow base log folder from configuration or environment variables
+BASE_LOG_FOLDER = conf.get("logging", "base_log_folder", fallback=os.getenv("AIRFLOW_BASE_LOG_FOLDER", "/opt/airflow/logs"))
 
 def get_log_file_path(ti):
     run_id = ti.run_id
@@ -51,7 +52,7 @@ class Reports(AppBuilderBaseView):
     @expose("/confluence_workflow/")
     @provide_session
     def confluence_workflow(self, session=None):
-        dag_id = "swot_confluence_report_status_dag"
+        dag_id = os.getenv("REPORT_PLUGIN_DAG_ID", "swot_confluence_report_status_dag")
 
         detailed_module_data = None
         detailed_failure_data = None

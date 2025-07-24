@@ -3,21 +3,21 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Confluence Workflow Status</h2>
-
+  <br/>
   {% if run_info %}
+    {% if run_info.end_date %}
     <table class="table table-bordered mt-3">
       <tr><th>Last Status Check</th><td>{{ run_info.end_date }}</td></tr>
     </table>
+    {% endif %}
 
   {% if detailed_module_data %}
-    <h3>Workflow Status</h3>
-  
     {% if detailed_module_data.temporal_range %}
       <p><strong>Temporal Range:</strong> {{ detailed_module_data.temporal_range }}</p>
     {% endif %}
     <p><strong>Total Time Running:</strong> {{ detailed_module_data.total_time }}</p>
-  
-    <table border="1" cellpadding="5" cellspacing="0">
+    <br/>
+    <table class="table table-bordered table-striped mt-4">
       <thead>
         <tr>
           <th>Module</th>
@@ -43,13 +43,20 @@
     </table>
   {% else %}
     <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
-      <h2>No workflows currently running.</h2>
+      {% if run_info.end_date is none %}
+        <br/>
+        <h4>Updating Status...</h4>
+      {% else %}
+        <br/>
+        <h3>No workflows currently running.</h3>
+      {% endif %}
     </div>
   {% endif %}
 
   {% if detailed_failure_data %}
-    <h3>🧾 Failure Report Details</h3>
-    
+    <br/>
+    <h3>Failure Report Details</h3>
+    <br/>
     {% for failure_category, failures in detailed_failure_data.items() %}
       <div class="card mb-4">
         <div class="card-header">
@@ -82,7 +89,8 @@
       </div>
     {% endfor %}
   {% elif detailed_module_data %}
-    <h3>No failures found</h3>
+    <br/>
+    <h4>No failures found</h4>
   {% endif %}
 
 
