@@ -6,5 +6,4 @@ RUN pip install apache-airflow-providers-amazon==9.10.0
 
 # Only use this if we end up needed some common tooling (e.g. token_generator)
 # code common to all DAGs
-#COPY plugins /opt/airflow/plugins
-
+COPY plugins /opt/airflow/plugins
