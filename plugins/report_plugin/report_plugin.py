@@ -46,12 +46,12 @@ def get_log_file_path(ti):
 
 
 # Define a View class that uses AppBuilderBaseView
-class Reports(AppBuilderBaseView):
-    default_view = "confluence_workflow"
+class Report(AppBuilderBaseView):
+    default_view = "confluence_workflow_original"
     
-    @expose("/confluence_workflow/")
+    @expose("/confluence_workflow_original/")
     @provide_session
-    def confluence_workflow(self, session=None):
+    def confluence_workflow_original(self, session=None):
         dag_id = os.getenv("REPORT_PLUGIN_DAG_ID", "swot_confluence_report_status_dag")
 
         detailed_module_data = None
@@ -135,8 +135,8 @@ class ReportPlugin(AirflowPlugin):
     flask_blueprints = [bp]
     appbuilder_views = [
         {
-            "name": "Confluence Workflow",
+            "name": "Confluence Workflow (Original)",
             "category": "Status Reports",
-            "view": Reports(),
+            "view": Report(),
         }
     ]
