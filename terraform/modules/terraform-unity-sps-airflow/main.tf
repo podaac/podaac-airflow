@@ -464,6 +464,18 @@ resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
   cidr_ipv4         = each.key
 }
 
+/* Note: re-enable this to allow access via the JPL network*/
+#tfsec:ignore:AVD-AWS-0107
+resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule_https" {
+  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16"])
+  security_group_id = aws_security_group.airflow_ingress_sg.id
+  description       = "SecurityGroup ingress rule for JPL-local addresses, SSL"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = each.key
+}
+
 data "aws_security_groups" "venue_proxy_sg" {
   filter {
     name   = "group-name"
@@ -494,12 +506,12 @@ resource "kubernetes_ingress_v1" "airflow_ingress" {
       "alb.ingress.kubernetes.io/scheme"                              = "internal"
       "alb.ingress.kubernetes.io/target-type"                         = "ip"
       "alb.ingress.kubernetes.io/subnets"                             = join(",", data.aws_subnets.private_application_subnets.ids)
-      "alb.ingress.kubernetes.io/listen-ports"                        = "[{\"HTTP\": ${local.load_balancer_port}}]"
+      "alb.ingress.kubernetes.io/listen-ports"                        = "[{\"HTTP\": ${local.load_balancer_port}, \"HTTPS\": 443}]"
       "alb.ingress.kubernetes.io/security-groups"                     = aws_security_group.airflow_ingress_sg.id
       "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "true"
       "alb.ingress.kubernetes.io/healthcheck-path"                    = "/health"
-      /*"alb.ingress.kubernetes.io/certificate-arn"                     = data.aws_ssm_parameter.ssl_cert_arn.value
-      "alb.ingress.kubernetes.io/ssl-policy"                          = "ELBSecurityPolicy-TLS13-1-2-2021-06"*/
+      "alb.ingress.kubernetes.io/certificate-arn"                     = var.ssl_certificate_arn
+      "alb.ingress.kubernetes.io/ssl-policy"                          = "ELBSecurityPolicy-TLS13-1-2-2021-06"
     }
   }
   spec {

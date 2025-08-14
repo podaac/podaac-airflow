@@ -57,5 +57,6 @@ module "unity-sps-airflow" {
   airflow_webserver_password = var.airflow_webserver_password
   docker_images              = var.airflow_docker_images
   helm_charts                = var.helm_charts
-  /*karpenter_node_pools       = module.unity-sps-karpenter-node-config.karpenter_node_pools*/
+  ssl_certificate_arn        = var.ssl_certificate_arn
+  /*karpenter_node_pools     = module.unity-sps-karpenter-node-config.karpenter_node_pools*/
 }

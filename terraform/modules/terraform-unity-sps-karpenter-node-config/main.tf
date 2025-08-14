@@ -27,7 +27,7 @@ resource "kubernetes_manifest" "karpenter_node_classes" {
       securityGroupSelectorTerms = [{
         tags = {
           "kubernetes.io/cluster/${data.aws_eks_cluster.cluster.name}" = "owned"
-          "Name"                                                       = "${data.aws_eks_cluster.cluster.name}-node"
+          "Name"                                                       = "eks-cluster-sg-${data.aws_eks_cluster.cluster.name}*"
         }
       }]
       blockDeviceMappings = [for bd in tolist(data.aws_ami.al2_eks_optimized.block_device_mappings) : {

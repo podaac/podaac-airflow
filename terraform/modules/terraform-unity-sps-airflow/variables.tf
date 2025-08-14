@@ -72,6 +72,12 @@ variable "docker_images" {
   })
 }
 
+variable "ssl_certificate_arn"{
+  description = "SSL certificate arn to use for load balancer"
+  type        = string
+}
+
+
 /*
 variable "karpenter_node_pools" {
   description = "Names of the Karpenter node pools"

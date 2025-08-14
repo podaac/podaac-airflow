@@ -357,3 +357,8 @@ variable "installprefix" {
   type        = string
   default     = ""
 }
+
+variable "ssl_certificate_arn"{
+  description = "ARN of SSL cert to use (must be pre-created)"
+  type        = string
+}
