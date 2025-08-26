@@ -1,0 +1,84 @@
+{% extends "airflow/main.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Confluence Workflow Status</h2>
+  <br/>
+  {% if detailed_module_data %}
+    {% if detailed_module_data.temporal_range %}
+      <p><strong>Temporal Range:</strong> {{ detailed_module_data.temporal_range }}</p>
+    {% endif %}
+    <p><strong>Total Time Running:</strong> {{ detailed_module_data.total_time }}</p>
+    <br/>
+    <table class="table table-bordered table-striped mt-4">
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Total Jobs</th>
+          <th>Succeeded</th>
+          <th>Failed</th>
+          <th>% Failed</th>
+          <th>Execution Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for module in detailed_module_data.modules %}
+        <tr>
+          <td>{{ module['Module'] }}</td>
+          <td>{{ module['Total Jobs'] }}</td>
+          <td>{{ module['Succeeded'] }}</td>
+          <td>{{ module['Failed'] }}</td>
+          <td>{{ module['Percentage Failed'] }}</td>
+          <td>{{ module['Execution Time'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+      <br/>
+      <h3>No workflows currently running.</h3>
+    </div>
+  {% endif %}
+
+  {% if detailed_failure_data %}
+    <br/>
+    <h3>Failure Report Details</h3>
+    <br/>
+    {% for failure_category, failures in detailed_failure_data.items() %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h4>{{ failure_category }}</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Reach ID</th>
+                <th>SWORD File</th>
+                <th>SWOT File</th>
+                <th>SOS File</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for failure in failures %}
+                <tr>
+                  <td>{{ failure.Index }}</td>
+                  <td>{{ failure.Value.reach_id }}</td>
+                  <td>{{ failure.Value.sword }}</td>
+                  <td>{{ failure.Value.swot }}</td>
+                  <td>{{ failure.Value.sos }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endfor %}
+  {% elif detailed_module_data %}
+    <br/>
+    <h4>No failures found</h4>
+  {% endif %}
+</div>
+{% endblock %}
