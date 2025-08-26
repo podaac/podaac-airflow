@@ -386,6 +386,22 @@ resource "kubernetes_secret" "airflow_metadata" {
   }
 }
 
+resource "random_password" "airflow_password" {
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+# Store the password in SSM Parameter Store
+resource "aws_ssm_parameter" "web_password" {
+  name  = "${local.resource_name_prefix}/web/admin"
+  type  = "SecureString"
+  value = random_password.airflow_password.result
+}
+
+
 resource "helm_release" "airflow" {
   name       = "airflow-podaac"
   repository = var.helm_charts.airflow.repository
@@ -421,7 +437,7 @@ resource "helm_release" "airflow" {
   }
   set_sensitive {
     name  = "webserver.defaultUser.password"
-    value = var.airflow_webserver_password
+    value = random_password.airflow_password.result
   }
   timeout = 1200
   depends_on = [

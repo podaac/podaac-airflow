@@ -36,10 +36,12 @@ variable "airflow_webserver_username" {
   default     = "admin"
 }
 
-variable "airflow_webserver_password" {
-  description = "The password for the Airflow webserver and UI."
-  type        = string
-}
+#Removed in favor of auto-generated password
+#
+#variable "airflow_webserver_password" {
+#  description = "The password for the Airflow webserver and UI."
+#  type        = string
+#}*/
 
 variable "helm_charts" {
   description = "Helm charts for the associated services."
@@ -72,8 +74,8 @@ variable "airflow_docker_images" {
   })
   default = {
     airflow = {
-      name = "ghcr.io/unity-sds/unity-sps/sps-airflow"
-      tag  = "2.4.0"
+      name = "ghcr.io/podaac/podaac-airflow"
+      tag  = "latest"
     }
   }
 }

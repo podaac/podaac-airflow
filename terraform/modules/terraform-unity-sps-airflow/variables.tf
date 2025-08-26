@@ -48,11 +48,6 @@ variable "airflow_webserver_username" {
   type        = string
 }
 
-variable "airflow_webserver_password" {
-  description = "The password for the Airflow webserver and UI."
-  type        = string
-}
-
 variable "helm_charts" {
   description = "Helm charts for the associated services."
   type = map(object({
