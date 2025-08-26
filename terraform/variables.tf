@@ -154,12 +154,12 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-family"
           operator = "In"
-          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c5", "r7i", "r6i", "r5"]
+          values   = ["m7i", "m6i", "m5", "m5ad", "t3", "c7i", "c6i", "c6id", "c5", "r7i", "r6i", "r5"]
         },
         {
           key      = "karpenter.k8s.aws/instance-cpu"
           operator = "Gt"
-          values   = ["1"] // From 2 inclusive
+          values   = ["0"] // From 0.5 inclusive
         },
         {
           key      = "karpenter.k8s.aws/instance-cpu"
@@ -169,22 +169,18 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Gt"
-          values   = ["4095"] // 4 GiB = 4096 MiB
+          values   = ["511"] // 0.5 GiB = 512 MiB
         },
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Lt"
-          values   = ["131073"] // 128 GiB = 131072 MiB
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-hypervisor",
-          operator = "In",
-          values   = ["nitro"]
+          # values   = ["131073"] // 128 GiB = 131072 MiB
+          values = ["262145"] // 256 GiB = 262144 MiB
         }
       ]
       limits = {
-        cpu    = "528"    // 11 x 48
-        memory = "1056Gi" // 11 x 96
+        cpu    = "6400"    # 64 CPU X 100
+        memory = "12800Gi" # 128 Gi X 100
       }
       disruption = {
         consolidationPolicy = "WhenEmpty"
@@ -197,12 +193,12 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-family"
           operator = "In"
-          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c5", "r7i", "r6i", "r5"]
+          values   = ["m7i", "m6i", "m5", "m5ad", "t3", "c7i", "c6i", "c6id", "c5", "r7i", "r6i", "r5"]
         },
         {
           key      = "karpenter.k8s.aws/instance-cpu"
           operator = "Gt"
-          values   = ["1"] // From 2 inclusive
+          values   = ["0"] // From 0.5 inclusive
         },
         {
           key      = "karpenter.k8s.aws/instance-cpu"
@@ -212,22 +208,18 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Gt"
-          values   = ["4095"] // 4 GiB = 4096 MiB
+          # values   = ["4095"] // 4 GiB = 4096 MiB
+          values = ["511"] // 0.5 GiB = 512 MiB
         },
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Lt"
-          values   = ["32769"] // 32 GiB = 32768 MiB
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-hypervisor",
-          operator = "In",
-          values   = ["nitro"]
+          values   = ["65537"] // 64 GiB = 65536 MiB
         }
       ]
       limits = {
-        cpu    = "100"
-        memory = "400Gi"
+        cpu    = "6400"    # 64 CPU X 100
+        memory = "12800Gi" # 128 Gi X 100
       }
       disruption = {
         consolidationPolicy = "WhenEmpty"
@@ -240,50 +232,7 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-family"
           operator = "In"
-          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c5", "r7i", "r6i", "r5"]
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-cpu"
-          operator = "Gt"
-          values   = ["1"] // From 2 inclusive
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-cpu"
-          operator = "Lt"
-          values   = ["9"] // To 8 inclusive
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-memory"
-          operator = "Gt"
-          values   = ["8191"] // From 8 GB inclusive
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-memory"
-          operator = "Lt"
-          values   = ["32769"] // To 32 GB inclusive
-        },
-        {
-          key      = "karpenter.k8s.aws/instance-hypervisor",
-          operator = "In",
-          values   = ["nitro"]
-        }
-      ]
-      limits = {
-        cpu    = "80"
-        memory = "320Gi"
-      }
-      disruption = {
-        consolidationPolicy = "WhenEmpty"
-        consolidateAfter    = "1m"
-      }
-    },
-    "airflow-core-components" = {
-      nodeClassRef = "default",
-      requirements = [
-        {
-          key      = "karpenter.k8s.aws/instance-family"
-          operator = "In"
-          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c5", "r7i", "r6i", "r5"]
+          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c6id", "c5", "r7i", "r6i", "r5", "m5ad"]
         },
         {
           key      = "karpenter.k8s.aws/instance-cpu"
@@ -298,17 +247,50 @@ variable "karpenter_node_pools" {
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Gt"
-          values   = ["8191"] // From 8 GB inclusive
+          values   = ["4095"] // From 4 GB inclusive
         },
         {
           key      = "karpenter.k8s.aws/instance-memory"
           operator = "Lt"
-          values   = ["32769"] // To 32 GB inclusive
+          values   = ["65537"] // To 64 GB inclusive
+        }
+      ]
+      limits = {
+        cpu    = "80"
+        memory = "320Gi"
+      }
+      disruption = {
+        consolidationPolicy = "WhenEmptyOrUnderutilized"
+        consolidateAfter    = "1m"
+      }
+    },
+    "airflow-core-components" = {
+      nodeClassRef = "default",
+      requirements = [
+        {
+          key      = "karpenter.k8s.aws/instance-family"
+          operator = "In"
+          values   = ["m7i", "m6i", "m5", "t3", "c7i", "c6i", "c6id", "c5", "r7i", "r6i", "r5", "m5ad"]
         },
         {
-          key      = "karpenter.k8s.aws/instance-hypervisor",
-          operator = "In",
-          values   = ["nitro"]
+          key      = "karpenter.k8s.aws/instance-cpu"
+          operator = "Gt"
+          values   = ["1"] // From 2 inclusive
+        },
+        {
+          key      = "karpenter.k8s.aws/instance-cpu"
+          operator = "Lt"
+          values   = ["17"] // To 16 inclusive
+        },
+        {
+          key      = "karpenter.k8s.aws/instance-memory"
+          operator = "Gt"
+          values   = ["4095"] // From 4 GB inclusive
+        },
+        {
+          key      = "karpenter.k8s.aws/instance-memory"
+          operator = "Lt"
+          values   = ["65537"] // To 64 GB inclusive
         }
       ]
       limits = {
@@ -361,4 +343,9 @@ variable "installprefix" {
 variable "ssl_certificate_arn"{
   description = "ARN of SSL cert to use (must be pre-created)"
   type        = string
+}
+
+variable "airflow_state_bucket"{
+  description = "Location of Airflow state, and used for 'interim' products"
+  type = string
 }

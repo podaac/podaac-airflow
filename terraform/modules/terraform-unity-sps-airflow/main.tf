@@ -394,11 +394,13 @@ resource "helm_release" "airflow" {
   namespace  = data.kubernetes_namespace.service_area.metadata[0].name
   values = [
     templatefile("${path.module}/../../airflow_values.yaml", {
+      aws_account_id           = "${data.aws_caller_identity.current.account_id}"
       airflow_image_repo       = var.docker_images.airflow.name
       airflow_image_tag        = var.docker_images.airflow.tag
       kubernetes_namespace     = data.kubernetes_namespace.service_area.metadata[0].name
       metadata_secret_name     = local.airflow_metadata_kubernetes_secret
       webserver_secret_name    = local.airflow_webserver_kubernetes_secret
+      airflow_state_bucket     = var.airflow_state_bucket
       airflow_logs_s3_location = "s3://${aws_s3_bucket.airflow_logs.id}"
       airflow_worker_role_arn  = aws_iam_role.airflow_worker_role.arn
       workers_pvc_name         = kubernetes_persistent_volume_claim.airflow_kpo.metadata[0].name

@@ -77,6 +77,10 @@ variable "ssl_certificate_arn"{
   type        = string
 }
 
+variable "airflow_state_bucket"{
+  type = string
+  description = "state bucket used for interim products"
+}
 
 /*
 variable "karpenter_node_pools" {
