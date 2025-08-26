@@ -54,8 +54,8 @@ module "unity-sps-airflow" {
   db_secret_arn              = module.unity-sps-database.db_secret_arn
   efs_file_system_id         = module.unity-sps-efs.file_system_id
   airflow_webserver_username = var.airflow_webserver_username
-  airflow_webserver_password = var.airflow_webserver_password
   docker_images              = var.airflow_docker_images
   helm_charts                = var.helm_charts
-  /*karpenter_node_pools       = module.unity-sps-karpenter-node-config.karpenter_node_pools*/
+  ssl_certificate_arn        = var.ssl_certificate_arn
+  airflow_state_bucket       = var.airflow_state_bucket
 }

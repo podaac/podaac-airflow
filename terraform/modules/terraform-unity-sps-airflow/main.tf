@@ -386,6 +386,22 @@ resource "kubernetes_secret" "airflow_metadata" {
   }
 }
 
+resource "random_password" "airflow_password" {
+  length  = 16
+  special = true
+  upper   = true
+  lower   = true
+  numeric = true
+}
+
+# Store the password in SSM Parameter Store
+resource "aws_ssm_parameter" "web_password" {
+  name  = "${local.resource_name_prefix}/web/admin"
+  type  = "SecureString"
+  value = random_password.airflow_password.result
+}
+
+
 resource "helm_release" "airflow" {
   name       = "airflow-podaac"
   repository = var.helm_charts.airflow.repository
@@ -394,11 +410,13 @@ resource "helm_release" "airflow" {
   namespace  = data.kubernetes_namespace.service_area.metadata[0].name
   values = [
     templatefile("${path.module}/../../airflow_values.yaml", {
+      aws_account_id           = "${data.aws_caller_identity.current.account_id}"
       airflow_image_repo       = var.docker_images.airflow.name
       airflow_image_tag        = var.docker_images.airflow.tag
       kubernetes_namespace     = data.kubernetes_namespace.service_area.metadata[0].name
       metadata_secret_name     = local.airflow_metadata_kubernetes_secret
       webserver_secret_name    = local.airflow_webserver_kubernetes_secret
+      airflow_state_bucket     = var.airflow_state_bucket
       airflow_logs_s3_location = "s3://${aws_s3_bucket.airflow_logs.id}"
       airflow_worker_role_arn  = aws_iam_role.airflow_worker_role.arn
       workers_pvc_name         = kubernetes_persistent_volume_claim.airflow_kpo.metadata[0].name
@@ -419,7 +437,7 @@ resource "helm_release" "airflow" {
   }
   set_sensitive {
     name  = "webserver.defaultUser.password"
-    value = var.airflow_webserver_password
+    value = random_password.airflow_password.result
   }
   timeout = 1200
   depends_on = [
@@ -464,6 +482,18 @@ resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
   cidr_ipv4         = each.key
 }
 
+/* Note: re-enable this to allow access via the JPL network*/
+#tfsec:ignore:AVD-AWS-0107
+resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule_https" {
+  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16"])
+  security_group_id = aws_security_group.airflow_ingress_sg.id
+  description       = "SecurityGroup ingress rule for JPL-local addresses, SSL"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = each.key
+}
+
 data "aws_security_groups" "venue_proxy_sg" {
   filter {
     name   = "group-name"
@@ -494,12 +524,12 @@ resource "kubernetes_ingress_v1" "airflow_ingress" {
       "alb.ingress.kubernetes.io/scheme"                              = "internal"
       "alb.ingress.kubernetes.io/target-type"                         = "ip"
       "alb.ingress.kubernetes.io/subnets"                             = join(",", data.aws_subnets.private_application_subnets.ids)
-      "alb.ingress.kubernetes.io/listen-ports"                        = "[{\"HTTP\": ${local.load_balancer_port}}]"
+      "alb.ingress.kubernetes.io/listen-ports"                        = "[{\"HTTP\": ${local.load_balancer_port}, \"HTTPS\": 443}]"
       "alb.ingress.kubernetes.io/security-groups"                     = aws_security_group.airflow_ingress_sg.id
       "alb.ingress.kubernetes.io/manage-backend-security-group-rules" = "true"
       "alb.ingress.kubernetes.io/healthcheck-path"                    = "/health"
-      /*"alb.ingress.kubernetes.io/certificate-arn"                     = data.aws_ssm_parameter.ssl_cert_arn.value
-      "alb.ingress.kubernetes.io/ssl-policy"                          = "ELBSecurityPolicy-TLS13-1-2-2021-06"*/
+      "alb.ingress.kubernetes.io/certificate-arn"                     = var.ssl_certificate_arn
+      "alb.ingress.kubernetes.io/ssl-policy"                          = "ELBSecurityPolicy-TLS13-1-2-2021-06"
     }
   }
   spec {
