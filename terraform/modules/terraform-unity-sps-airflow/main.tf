@@ -396,7 +396,7 @@ resource "random_password" "airflow_password" {
 
 # Store the password in SSM Parameter Store
 resource "aws_ssm_parameter" "web_password" {
-  name  = "${local.resource_name_prefix}/web/admin"
+  name  = join("",["/",format(local.resource_name_prefix,"airflow/web/admin")])
   type  = "SecureString"
   value = random_password.airflow_password.result
 }
@@ -473,7 +473,7 @@ resource "aws_security_group" "airflow_ingress_sg_internal" {
 /* Note: re-enable this to allow access via the JPL network*/
 #tfsec:ignore:AVD-AWS-0107
 resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
-  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16"])
+  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16", "10.6.0.0/16"])
   security_group_id = aws_security_group.airflow_ingress_sg.id
   description       = "SecurityGroup ingress rule for JPL-local addresses"
   ip_protocol       = "tcp"
@@ -485,7 +485,7 @@ resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule" {
 /* Note: re-enable this to allow access via the JPL network*/
 #tfsec:ignore:AVD-AWS-0107
 resource "aws_vpc_security_group_ingress_rule" "airflow_ingress_sg_jpl_rule_https" {
-  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16"])
+  for_each          = toset(["128.149.0.0/16", "137.78.0.0/16", "137.79.0.0/16", "10.6.0.0/16"])
   security_group_id = aws_security_group.airflow_ingress_sg.id
   description       = "SecurityGroup ingress rule for JPL-local addresses, SSL"
   ip_protocol       = "tcp"
