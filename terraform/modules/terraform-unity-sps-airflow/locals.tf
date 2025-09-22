@@ -20,6 +20,7 @@ locals {
   airflow_webserver_navbar_color = {
     "ops"     = "#bf4f4f"
     "prod"    = "#bf4f4f"
+    "uat"    = "#cfdf4f"
     "test"    = "#cfdf4f"
     "int"     = "#cfdf4f"
     "sit"     = "#58cc35"
