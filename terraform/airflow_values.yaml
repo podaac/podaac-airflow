@@ -308,6 +308,8 @@ allowPodLaunching: true
 #  
 #]
 env:
+  - name: "AIRFLOW__API__AUTH_BACKENDS"
+    value: "airflow.api.auth.backend.basic_auth"
   - name: "AWS_DEFAULT_REGION"
     value: "us-west-2"
   - name: "AWS_ACCOUNT_ID_SIT"

@@ -2,7 +2,11 @@ terraform {
   backend "s3" {
     bucket               = "podaac-sit-services-airlfow"
     workspace_key_prefix = "airflow/tfstates"
-    key                  = "terraform.tfstate"
+    #Use the airflow/ prefix in ops and uat environments!
+    key                  = "airflow/terraform.tfstate"
+    
+    # Must use this key, for now, in sit
+    #key                  = "terraform.tfstate"
     region               = "us-west-2"
     encrypt              = true
   }
