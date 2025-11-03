@@ -4,81 +4,205 @@
 <div class="container mt-4">
   <h2>Confluence Workflow Status</h2>
   <br/>
-  {% if detailed_module_data %}
-    {% if detailed_module_data.temporal_range %}
-      <p><strong>Temporal Range:</strong> {{ detailed_module_data.temporal_range }}</p>
-    {% endif %}
-    <p><strong>Total Time Running:</strong> {{ detailed_module_data.total_time }}</p>
-    <br/>
-    <table class="table table-bordered table-striped mt-4">
-      <thead>
-        <tr>
-          <th>Module</th>
-          <th>Total Jobs</th>
-          <th>Succeeded</th>
-          <th>Failed</th>
-          <th>% Failed</th>
-          <th>Execution Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for module in detailed_module_data.modules %}
-        <tr>
-          <td>{{ module['Module'] }}</td>
-          <td>{{ module['Total Jobs'] }}</td>
-          <td>{{ module['Succeeded'] }}</td>
-          <td>{{ module['Failed'] }}</td>
-          <td>{{ module['Percentage Failed'] }}</td>
-          <td>{{ module['Execution Time'] }}</td>
-        </tr>
+  
+  <!-- Execution Selection -->
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+      <label for="executionSelect" class="form-label"><strong>Select Execution:</strong></label>
+      <select class="form-select" id="executionSelect">
+        <option value="">Choose an execution...</option>
+        {% for execution in executions %}
+        <option value="{{ execution.executionArn }}">
+          {{ execution.name }} - {{ execution.status }} ({{ execution.startDate.strftime('%Y-%m-%d %H:%M:%S') }})
+        </option>
         {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
-      <br/>
-      <h3>No workflows currently running.</h3>
+      </select>
     </div>
-  {% endif %}
-
-  {% if detailed_failure_data %}
+    <div class="col-md-4 d-flex align-items-center justify-content-center">
+      <button type="button" class="btn btn-primary mt-3" id="loadExecutionBtn" disabled>Load Execution</button>
+    </div>
+  </div>
+  
+  <!-- Loading indicator -->
+  <div id="loadingIndicator" class="text-center" style="display: none;">
     <br/>
-    <h3>Failure Report Details</h3>
-    <br/>
-    {% for failure_category, failures in detailed_failure_data.items() %}
-      <div class="card mb-4">
-        <div class="card-header">
-          <h4>{{ failure_category }}</h4>
-        </div>
-        <div class="card-body">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Index</th>
-                <th>Reach ID</th>
-                <th>SWORD File</th>
-                <th>SWOT File</th>
-                <th>SOS File</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for failure in failures %}
-                <tr>
-                  <td>{{ failure.Index }}</td>
-                  <td>{{ failure.Value.reach_id }}</td>
-                  <td>{{ failure.Value.sword }}</td>
-                  <td>{{ failure.Value.swot }}</td>
-                  <td>{{ failure.Value.sos }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    {% endfor %}
-  {% elif detailed_module_data %}
-    <br/>
-    <h4>No failures found</h4>
-  {% endif %}
+      <p class="h4">Loading execution details...</p>
+  </div>
+  
+  <!-- Error message -->
+  <div id="errorMessage" class="alert alert-danger" style="display: none;"></div>
+  
+  <!-- Results container -->
+  <div id="resultsContainer">
+    <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+      <h3>Select an execution to view details</h3>
+    </div>
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const executionSelect = document.getElementById('executionSelect');
+    const loadBtn = document.getElementById('loadExecutionBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    // Enable/disable load button based on selection
+    executionSelect.addEventListener('change', function() {
+        loadBtn.disabled = !this.value;
+    });
+    
+    // Handle load button click
+    loadBtn.addEventListener('click', function() {
+        const executionArn = executionSelect.value;
+        if (!executionArn) return;
+        
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        errorMessage.style.display = 'none';
+        resultsContainer.innerHTML = '';
+        
+        // Make AJAX request
+        fetch(`?execution_arn=${encodeURIComponent(executionArn)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('Response is not valid JSON:', text.substring(0, 200));
+                        throw new Error('Server returned HTML instead of JSON. Check the URL path.');
+                    }
+                });
+            })
+            .then(data => {
+                loadingIndicator.style.display = 'none';
+                
+                if (data.error) {
+                    errorMessage.textContent = data.error;
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                // Render the results
+                renderResults(data.module_data, data.failure_data, executionArn, data.state_input, data.status);
+            })
+            .catch(error => {
+                loadingIndicator.style.display = 'none';
+                errorMessage.textContent = 'Error loading execution: ' + error.message;
+                errorMessage.style.display = 'block';
+            });
+    });
+    
+    function renderResults(moduleData, failureData, executionArn, stateInput, status) {
+        let html = '';
+        
+        if (moduleData) {
+            // Display execution ARN and state input
+            html += `<div class="mb-4">`;
+            html += `<br/>`;
+            html += `<h4>Execution Details</h4>`;
+            html += `<p><strong>Execution ARN:</strong> ${executionArn}</p>`;
+            html += `<p><strong>Step Function Inputs:</strong></p>`;
+            html += `<pre class="bg-light p-3 rounded">${JSON.stringify(JSON.parse(stateInput), null, 2)}</pre>`;
+            html += `</div>`;
+            
+            if (moduleData.temporal_range) {
+                html += `<p class="mb-3"><strong>Temporal Range:</strong> ${moduleData.temporal_range}</p>`;
+            }
+            
+            html += `<p class="mb-3"><strong>Total Run Time:</strong> ${moduleData.total_time}</p>`;
+            html += `<p class="mb-3"><strong>Status:</strong> ${status}</p>`;
+            html += '<br/>';
+            
+            html += `
+                <table class="table table-bordered table-striped mt-4">
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>Total Jobs</th>
+                            <th>Succeeded</th>
+                            <th>Failed</th>
+                            <th>% Failed</th>
+                            <th>Execution Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // Filter out modules with undefined values
+            const validModules = moduleData.modules.filter(module => 
+                module && 
+                module.Module && 
+                module.Module !== 'undefined' && 
+                module['Total Jobs'] !== undefined && 
+                module['Total Jobs'] !== 'undefined'
+            );
+            
+            for (const module of validModules) {
+                html += `
+                    <tr>
+                        <td>${module.Module}</td>
+                        <td>${module['Total Jobs']}</td>
+                        <td>${module.Succeeded}</td>
+                        <td>${module.Failed}</td>
+                        <td>${module['Percentage Failed']}</td>
+                        <td>${module['Execution Time']}</td>
+                    </tr>
+                `;
+            }
+            
+            html += '</tbody></table>';
+        } else {
+            html += '<div class="d-flex justify-content-center align-items-center" style="height: 50vh;"><h3>No workflows currently running.</h3></div>';
+        }
+        
+        if (failureData) {
+            html += '<br/><h3 class="mt-4 mb-4">Failure Report Details</h3>';
+            
+            for (const [failureCategory, failures] of Object.entries(failureData)) {
+                html += `
+                    <br/><div class="card mb-4">
+                        <div class="card-header">
+                            <h4>${failureCategory}</h4>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Index</th>
+                                        <th>Reach ID</th>
+                                        <th>SWORD File</th>
+                                        <th>SWOT File</th>
+                                        <th>SOS File</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                for (const failure of failures) {
+                    html += `
+                        <tr>
+                            <td>${failure.Index}</td>
+                            <td>${failure.Value.reach_id}</td>
+                            <td>${failure.Value.sword}</td>
+                            <td>${failure.Value.swot}</td>
+                            <td>${failure.Value.sos}</td>
+                        </tr>
+                    `;
+                }
+                
+                html += '</tbody></table></div></div>';
+            }
+        } else if (moduleData) {
+            html += '<br/><h4 class="mt-4 mb-4">No failures found</h4>';
+        }
+        
+        resultsContainer.innerHTML = html;
+    }
+});
+</script>
 {% endblock %}
