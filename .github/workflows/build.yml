@@ -90,7 +90,7 @@ jobs:
           aws-region: us-west-2
 
       - name: Set up kubeconfig for EKS
-        run: aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }-eks --region us-west-2
+        run: aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2
 
       - name: Terraform Apply
         if: |
