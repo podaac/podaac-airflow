@@ -37,7 +37,7 @@ jobs:
       - name: Setup kubectl
         uses: azure/setup-kubectl@v4
         with:
-          version: '1.32.0'  # adjust version
+          version: 'v1.32.0'  # adjust version
 
       - name: Version Management
         id: versioning
