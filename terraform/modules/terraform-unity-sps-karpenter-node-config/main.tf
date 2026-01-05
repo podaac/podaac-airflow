@@ -1,4 +1,9 @@
 resource "kubernetes_manifest" "karpenter_node_classes" {
+  
+  field_manager {
+    force_conflicts = true
+  }
+
   for_each = var.karpenter_node_classes
 
   manifest = {

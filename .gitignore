@@ -37,6 +37,8 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+*.DS_STORE
+*.terraform.lock.hcl
 # End of https://www.toptal.com/developers/gitignore/api/terraform
 
 __pycache__
