@@ -21,8 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     permissions:
-      id-token: write
       contents: read
+      packages: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -91,10 +92,8 @@ jobs:
         run: |
           terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
           terraform validate
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
-            terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
-          fi
+          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
         working-directory: terraform
 
       - name: Quick check for changes
