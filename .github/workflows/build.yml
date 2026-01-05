@@ -34,6 +34,11 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: '1.32'  # adjust version
+
       - name: Version Management
         id: versioning
         run: |
