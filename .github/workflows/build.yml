@@ -89,6 +89,11 @@ jobs:
           aws-secret-access-key: ${{ secrets[format('AWS_SECRET_ACCESS_KEY_SERVICES_{0}', env.TARGET_ENV_UPPERCASE)] }}
           aws-region: us-west-2
 
+      - name: Check AWS credentials
+        run: |
+          echo "Checking which AWS credentials are active..."
+          aws sts get-caller-identity
+
       - name: Set up kubeconfig and Terraform Apply
         if: |
           github.ref == 'refs/heads/develop' ||
