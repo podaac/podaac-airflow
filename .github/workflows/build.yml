@@ -94,22 +94,6 @@ jobs:
           echo "Checking which AWS credentials are active..."
           aws sts get-caller-identity
 
-      - name: Set up kubeconfig and Terraform Apply
-        if: |
-          github.ref == 'refs/heads/develop' ||
-          github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release')
-        env:
-          KUBECONFIG: /home/runner/.kube/config
-        run: |
-          aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2
-          export KUBECONFIG=/home/runner/.kube/config
-          terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
-          terraform validate
-          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
-          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
-        working-directory: terraform
-
       - name: Quick check for changes
         id: check_changes
         if: |
@@ -144,3 +128,20 @@ jobs:
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git tag -a "${VERSION}" -m "Version ${VERSION}"
           git push origin "${VERSION}"
+
+      - name: Set up kubeconfig and Terraform Apply
+        if: |
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/main'    ||
+          startsWith(github.ref, 'refs/heads/release')
+        env:
+          KUBECONFIG: /home/runner/.kube/config
+        run: |
+          aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2
+          export KUBECONFIG=/home/runner/.kube/config
+          terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
+          terraform validate
+          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+        working-directory: terraform
+          
