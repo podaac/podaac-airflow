@@ -1,0 +1,147 @@
+name: Build
+
+on:
+  push:
+    branches: 
+      - develop
+      - main
+      - 'release/**'
+      - 'feature/**'
+      - 'issue/**'
+      - 'issues/**'
+      - 'dependabot/**'
+  workflow_dispatch:
+
+env:
+  TERRAFORM_VERSION: '1.8.5'
+
+jobs:
+  terraform:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.32.0'  # adjust version
+
+      - name: Version Management
+        id: versioning
+        run: |
+          chmod +x ./bump_version.sh
+
+          current_version=$(cat VERSION)
+          echo "Current version: $current_version"
+
+          # Determine branch type
+          if [[ "${GITHUB_REF}" =~ ^refs/heads/(issue|feature|dependabot)/ ]]; then
+            TIMESTAMP=$(date -u +"%Y%m%d%H%M")
+            # Create alpha version with timestamp
+            base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+            new_version="${base_version}-alpha.${TIMESTAMP}"
+            echo "TARGET_ENV_UPPERCASE=SIT" >> $GITHUB_ENV
+            echo "TARGET_ENV_LOWERCASE=sit" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
+            ./bump_version.sh alpha
+            new_version=$(cat VERSION)
+            echo "TARGET_ENV_UPPERCASE=SIT" >> $GITHUB_ENV
+            echo "TARGET_ENV_LOWERCASE=sit" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF}" =~ ^refs/heads/release/ ]]; then
+            echo "TARGET_ENV_UPPERCASE=UAT" >> $GITHUB_ENV
+            echo "TARGET_ENV_LOWERCASE=uat" >> $GITHUB_ENV
+            if [[ "$current_version" =~ rc ]]; then
+              ./bump_version.sh rc
+            else
+              # start rc1 for the release branch
+              base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+              release_branch_version="${GITHUB_REF#refs/heads/release/}"
+              echo "${release_branch_version}-rc1" > VERSION
+            fi
+            new_version=$(cat VERSION)
+          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "TARGET_ENV_UPPERCASE=OPS" >> $GITHUB_ENV
+            echo "TARGET_ENV_LOWERCASE=ops" >> $GITHUB_ENV
+            ./bump_version.sh release
+            new_version=$(cat VERSION)
+          fi
+
+          # Export results for later steps
+          echo "new_version=${new_version}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets[format('AWS_ACCESS_KEY_ID_SERVICES_{0}', env.TARGET_ENV_UPPERCASE)] }}
+          aws-secret-access-key: ${{ secrets[format('AWS_SECRET_ACCESS_KEY_SERVICES_{0}', env.TARGET_ENV_UPPERCASE)] }}
+          aws-region: us-west-2
+
+      - name: Check AWS credentials
+        run: |
+          echo "Checking which AWS credentials are active..."
+          aws sts get-caller-identity
+
+      - name: Quick check for changes
+        id: check_changes
+        if: |
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/main'    ||
+          startsWith(github.ref, 'refs/heads/release')
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit Version Bump
+        # If building develop, a release branch, or main then we commit the version bump back to the repo
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git commit -am "/version ${{ env.new_version }}"
+          git push
+
+      - name: Push Tag
+        env:
+          VERSION: ${{ env.new_version }}
+        if: |
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/main'    ||
+          startsWith(github.ref, 'refs/heads/release')
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git tag -a "${VERSION}" -m "Version ${VERSION}"
+          git push origin "${VERSION}"
+
+      #- name: Set up kubeconfig and Terraform Apply
+      #  if: |
+      #    github.ref == 'refs/heads/develop' ||
+      #    github.ref == 'refs/heads/main'    ||
+      #    startsWith(github.ref, 'refs/heads/release')
+      #  env:
+      #    KUBECONFIG: /home/runner/.kube/config
+      #  run: |
+      #    aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2
+      #    export KUBECONFIG=/home/runner/.kube/config
+      #    terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
+      #    terraform validate
+      #    terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+      #    terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+      #  working-directory: terraform
+          
