@@ -135,14 +135,13 @@ jobs:
           github.ref == 'refs/heads/main'    ||
           startsWith(github.ref, 'refs/heads/release')
         env:
-          KUBECONFIG: /Users/gangl/.kube/config
-          SSL_CERTIFICATE_ARN: ${{ secrets[format('SSL_CERTIFICATE_ARN_{0}', env.TARGET_ENV_UPPERCASE)] }}
+          KUBECONFIG: /home/runner/.kube/config
         run: |
-          mkdir -p /Users/gangl/.kube
-          aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2 --kubeconfig /Users/gangl/.kube/config
-          export KUBECONFIG=/Users/gangl/.kube/config
+          aws eks update-kubeconfig --name podaac-services-${{ env.TARGET_ENV_LOWERCASE }}-eks --region us-west-2
+          export KUBECONFIG=/home/runner/.kube/config
           terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
           terraform validate
-          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars -var="ssl_certificate_arn=${SSL_CERTIFICATE_ARN}"
-          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars -var="ssl_certificate_arn=${SSL_CERTIFICATE_ARN}"
+          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
         working-directory: terraform
+          
