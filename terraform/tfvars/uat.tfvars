@@ -24,7 +24,7 @@ helm_charts = {
 
 installprefix = ""
 
-kubeconfig_filepath = "/Users/gangl/.kube/config"
+kubeconfig_filepath = "/home/runner/.kube/config"
 
 ogc_processes_docker_images = {
   "git_sync": {

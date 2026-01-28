@@ -999,19 +999,19 @@ triggerer:
     "karpenter.sh/nodepool": "airflow-core-components"
   affinity:
     nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
               - key: "karpenter.sh/capacity-type"
-                operator: "In"
-                values: [ "on-demand" ]
+                operator: In
+                values: ["on-demand"]
               - key: "karpenter.k8s.aws/instance-family"
-                operator: "In"
-                # values: ["c6i", "c5"] # Choosing compute-optimized instances
-                values: [ "r5" ] # Choosing memory-optimized instance
+                operator: In
+                values: ["r5"]   # memory-optimized
               - key: "karpenter.k8s.aws/instance-cpu"
-                operator: "In"
-                values: [ "8" ] # Scheduler might benefit from higher CPU
+                operator: In
+                values: ["8"]
 
 
 # Airflow Dag Processor Config
