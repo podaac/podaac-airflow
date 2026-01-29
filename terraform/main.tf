@@ -31,7 +31,7 @@ module "unity-sps-karpenter-node-config" {
   service_area           = var.service_area
   release                = var.release
   kubeconfig_filepath    = var.kubeconfig_filepath
-  ami_image_id       = var.ami_image_id
+  ami_image_id           = data.aws_ssm_parameter.eks_ami.value
   karpenter_node_classes = var.karpenter_node_classes
   karpenter_node_pools   = var.karpenter_node_pools
 }
