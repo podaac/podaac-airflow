@@ -1,3 +1,7 @@
+data "aws_ssm_parameter" "eks_ami" {
+  name = "/podaac/eks/podaac-services-${var.venue}-eks/ami"
+}
+
 data "aws_eks_cluster" "cluster" {
   name = format(local.resource_name_prefix, "eks")
 }
@@ -9,7 +13,7 @@ data "aws_iam_role" "cluster_iam_role" {
 data "aws_ami" "al2_eks_optimized" {
   filter {
     name   = "image-id"
-    values = [var.ami_image_id]
+    values = [data.aws_ssm_parameter.eks_ami.value]
   }
   owners = ["863143145967"]
 }
