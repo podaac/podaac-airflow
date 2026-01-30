@@ -22,3 +22,7 @@ data "aws_subnets" "private_application_subnets" {
     values = ["Private application*"]
   }
 }
+
+data "aws_ssm_parameter" "eks_ami" {
+  name = "/podaac/eks/podaac-services-${var.venue}-eks/ami"
+}

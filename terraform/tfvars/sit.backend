@@ -1,0 +1,5 @@
+bucket = "podaac-services-sit-terraform"
+key    = "services/podaac-airflow/terraform.tfstate"
+region = "us-west-2"
+encrypt = true
+workspace_key_prefix = "airflow/tfstates"

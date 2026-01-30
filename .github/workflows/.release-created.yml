@@ -1,0 +1,32 @@
+
+name: Release Branch Created
+
+# Run whenever a ref is created https://docs.github.com/en/actions/reference/events-that-trigger-workflows#create
+on:
+  create
+
+jobs:
+  # First job in the workflow builds and verifies the software artifacts
+  bump:
+    name: Bump minor version on develop
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Only run if ref created was a release branch
+    if:
+      ${{ startsWith(github.ref, 'refs/heads/release/') }}
+    steps:
+      # Checks-out the develop branch
+      - uses: actions/checkout@v6
+        with:
+          ref: 'refs/heads/develop'
+      - name: Bump minor version
+        run: |
+          chmod +x ./bump_version.sh
+          ./bump_version.sh minor
+          echo "software_version=$(cat VERSION)" >> $GITHUB_ENV
+      - name: Commit Version Bump
+        run: |
+          git config --global user.name 'podaac-airflow bot'
+          git config --global user.email 'podaac-airflow@noreply.github.com'
+          git commit -am "/version ${{ env.software_version }}"
+          git push

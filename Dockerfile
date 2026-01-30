@@ -1,11 +1,11 @@
-FROM apache/airflow:2.10.5-python3.11
+FROM apache/airflow:2.10.5-python3.12
 
-#RUN pip install boto3==1.34.89
-RUN pip install -U aiobotocore[awscli,boto3]>=2.21.1
-RUN pip install apache-airflow-providers-amazon==9.10.0
-RUN pip install earthaccess==0.14.0
-RUN pip install asf-search==9.0.9
+# Install Python deps in one layer
+RUN pip install --no-cache-dir -U \
+    "aiobotocore[awscli,boto3]>=3.1.1" \
+    apache-airflow-providers-amazon==9.20.0 \
+    earthaccess==0.15.1 \
+    asf-search==11.0.2
 
-# Only use this if we end up needed some common tooling (e.g. token_generator)
-# code common to all DAGs
+# Common tooling / plugins
 COPY plugins /opt/airflow/plugins
