@@ -6,10 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 [Unreleased]
+### Added-
+- Added in a poetry to keep track of python libraries used for airflow docker image
+- Updated docker image build 
+- Update docker building in github actions with tagging
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+
+[0.1.0]
 ### Added
 - Added Github Actions to build and deploy with terraform
 ### Changed
-- Initial release version 0.1.0 
+- Initial release version 0.1.0
 ### Deprecated
 ### Removed
 ### Fixed

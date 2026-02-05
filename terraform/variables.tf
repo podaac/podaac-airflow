@@ -112,10 +112,6 @@ variable "ogc_processes_docker_images" {
   }
 }
 
-variable "ami_image_id" {
-  type = string
-}
-
 variable "karpenter_node_classes" {
   description = "Configuration for karpenter_node_classes"
   type = map(object({
