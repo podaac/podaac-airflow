@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 [Unreleased]
-### Added-
+### Added
 - Added in a poetry to keep track of python libraries used for airflow docker image
 - Updated docker image build 
 - Update docker building in github actions with tagging
