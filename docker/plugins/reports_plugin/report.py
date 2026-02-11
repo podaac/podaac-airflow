@@ -46,8 +46,23 @@ def retrieve_total_time(exe_id, module_data):
     exe_data = SFN.describe_execution(
         executionArn=exe_id
     )
-    # Get current time as the workflow is still execution and stopDate is not populated
-    module_data["total_time"] = str(datetime.datetime.now(datetime.timezone.utc) - exe_data["startDate"])
+    
+    logging.info(f"[retrieve_total_time] startDate: {exe_data['startDate']}")
+    logging.info(f"[retrieve_total_time] stopDate: {exe_data.get('stopDate', 'None')}")
+    
+    # Use stopDate if execution has completed, otherwise use current time
+    if exe_data.get("stopDate"):
+        # Execution has completed, use actual duration
+        total_duration = exe_data["stopDate"] - exe_data["startDate"]
+        logging.info(f"[retrieve_total_time] Using stopDate for completed execution")
+    else:
+        # Execution is still running, calculate duration from start to now
+        total_duration = datetime.datetime.now(datetime.timezone.utc) - exe_data["startDate"]
+        logging.info(f"[retrieve_total_time] Using current time for running execution")
+        module_data["still_running"] = True
+    
+    logging.info(f"[retrieve_total_time] total_duration: {total_duration}")
+    module_data["total_time"] = str(total_duration)
 
 def retrieve_task_data(exe_id, module_data):
     """Retrieve execution data for specific state machine tasks."""

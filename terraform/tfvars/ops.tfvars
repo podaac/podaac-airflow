@@ -2,7 +2,7 @@
 airflow_docker_images = {
   "airflow": {
     "name": "ghcr.io/podaac/podaac-airflow",
-    "tag": "main"
+    "tag": "ops"
   }
 }
 
@@ -48,8 +48,6 @@ service_area = "airflow"
 tags = {
   "empty": ""
 }
-
-ami_image_id = "ami-064627abd5267ac59"
 
 # this should match what you did the `terraform init backend=` step with
 airflow_state_bucket = "podaac-ops-services-airflow"
