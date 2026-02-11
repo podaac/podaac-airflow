@@ -80,9 +80,9 @@ airflowVersion: "2.10.5"
 images:
   airflow:
     repository: ${airflow_image_repo}
-    tag: ${airflow_image_tag}
+    tag: ~
     # Specifying digest takes precedence over tag.
-    digest: ~
+    digest: sha256:2a6f26fc1cff7785d1fd8c0756ce50925dd2c8f4a4f46597c49066e081e3e9a3
     pullPolicy: IfNotPresent
   # To avoid images with user code, you can turn this to 'true' and
   # all the 'run-airflow-migrations' and 'wait-for-airflow-migrations' containers/jobs
@@ -540,7 +540,7 @@ workers:
           matchExpressions:
           - key: "karpenter.sh/capacity-type"
             operator: "In"
-            values: ["spot"]
+            values: ["on-demand"]
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
