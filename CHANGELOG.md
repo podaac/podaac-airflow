@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added in a poetry to keep track of python libraries used for airflow docker image
 - Updated docker image build 
-- Update docker building in github actions with tagging
+- Updated docker building in github actions with tagging
 ### Changed
 ### Deprecated
 ### Removed
