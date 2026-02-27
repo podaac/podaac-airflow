@@ -67,6 +67,8 @@ jobs:
           echo "TARGET_ENV_LOWERCASE=$TARGET_ENV_LOWERCASE" >> $GITHUB_OUTPUT
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
+          echo "New version: $new_version"
+
   docker-build:
     needs: versioning
     if: |
