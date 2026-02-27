@@ -14,9 +14,174 @@ on:
 
 env:
   TERRAFORM_VERSION: '1.8.5'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  POETRY_VERSION: '2.1.3'
+  PYTHON_VERSION: '3.11'
 
 jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    outputs:
+      TARGET_ENV_UPPERCASE: ${{ steps.set-vars.outputs.TARGET_ENV_UPPERCASE }}
+      TARGET_ENV_LOWERCASE: ${{ steps.set-vars.outputs.TARGET_ENV_LOWERCASE }}
+      new_version: ${{ steps.set-vars.outputs.new_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Version Management
+        id: set-vars
+        run: |
+          chmod +x ./bump_version.sh
+          current_version=$(cat VERSION)
+          echo "Current version: $current_version"
+          if [[ "${GITHUB_REF}" =~ ^refs/heads/(issue|feature|dependabot)/ ]]; then
+            TIMESTAMP=$(date -u +"%Y%m%d%H%M")
+            base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+            new_version="${base_version}-alpha.${TIMESTAMP}"
+            TARGET_ENV_UPPERCASE=SIT
+            TARGET_ENV_LOWERCASE=sit
+          elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
+            ./bump_version.sh alpha
+            new_version=$(cat VERSION)
+            TARGET_ENV_UPPERCASE=SIT
+            TARGET_ENV_LOWERCASE=sit
+          elif [[ "${GITHUB_REF}" =~ ^refs/heads/release/ ]]; then
+            TARGET_ENV_UPPERCASE=UAT
+            TARGET_ENV_LOWERCASE=uat
+            if [[ "$current_version" =~ rc ]]; then
+              ./bump_version.sh rc
+            else
+              base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+              release_branch_version="${GITHUB_REF#refs/heads/release/}"
+              echo "${release_branch_version}-rc.1" > VERSION
+            fi
+            new_version=$(cat VERSION)
+          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            TARGET_ENV_UPPERCASE=OPS
+            TARGET_ENV_LOWERCASE=ops
+            ./bump_version.sh release
+            new_version=$(cat VERSION)
+          fi
+          echo "TARGET_ENV_UPPERCASE=$TARGET_ENV_UPPERCASE" >> $GITHUB_OUTPUT
+          echo "TARGET_ENV_LOWERCASE=$TARGET_ENV_LOWERCASE" >> $GITHUB_OUTPUT
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+          echo "New version: $new_version"
+
+  docker-build:
+    needs: versioning
+    if: |
+      github.ref == 'refs/heads/develop' ||
+      github.ref == 'refs/heads/main'    ||
+      startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Setup Poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+
+      - name: Set version env
+        run: |
+          echo "TARGET_ENV_UPPERCASE=${{ needs.versioning.outputs.TARGET_ENV_UPPERCASE }}" >> $GITHUB_ENV
+          echo "TARGET_ENV_LOWERCASE=${{ needs.versioning.outputs.TARGET_ENV_LOWERCASE }}" >> $GITHUB_ENV
+          echo "new_version=${{ needs.versioning.outputs.new_version }}" >> $GITHUB_ENV
+
+      # Install the cosign tool except on PR
+      # https://github.com/sigstore/cosign-installer
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 #v3.5.0
+        with:
+          cosign-release: 'v2.2.4'
+
+      # Set up BuildKit Docker container builder to be able to build
+      # multi-platform images and export cache
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.new_version }}
+            type=raw,value=${{ env.TARGET_ENV_LOWERCASE }}
+
+      # Generate requirements.txt from Poetry
+      - name: Generate requirements.txt from Poetry
+        working-directory: podaac-airflow
+        run: |
+          poetry install
+          poetry export -f requirements.txt -o ../docker/requirements.txt --without-hashes
+
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        with:
+          context: docker
+          file: docker/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Sign the resulting Docker image digest except on PRs.
+      # This will only write to the public Rekor transparency log when the Docker
+      # repository is public to avoid leaking data.  If you would like to publish
+      # transparency data even for private images, pass --force to cosign below.
+      # https://github.com/sigstore/cosign
+      - name: Sign the published Docker image
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Test Airflow Docker image
+        working-directory: docker
+        run: |
+          chmod +x ./dockerfile_test.sh
+          ./dockerfile_test.sh ${{ env.TARGET_ENV_LOWERCASE }}
+
   terraform:
+    needs: [versioning, docker-build]
     name: 'Terraform Apply'
     runs-on: ubuntu-latest
     environment: production
@@ -39,48 +204,11 @@ jobs:
         with:
           version: 'v1.32.0'  # adjust version
 
-      - name: Version Management
-        id: versioning
+      - name: Set version env
         run: |
-          chmod +x ./bump_version.sh
-
-          current_version=$(cat VERSION)
-          echo "Current version: $current_version"
-
-          # Determine branch type
-          if [[ "${GITHUB_REF}" =~ ^refs/heads/(issue|feature|dependabot)/ ]]; then
-            TIMESTAMP=$(date -u +"%Y%m%d%H%M")
-            # Create alpha version with timestamp
-            base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
-            new_version="${base_version}-alpha.${TIMESTAMP}"
-            echo "TARGET_ENV_UPPERCASE=SIT" >> $GITHUB_ENV
-            echo "TARGET_ENV_LOWERCASE=sit" >> $GITHUB_ENV
-          elif [[ "${GITHUB_REF}" == "refs/heads/develop" ]]; then
-            ./bump_version.sh alpha
-            new_version=$(cat VERSION)
-            echo "TARGET_ENV_UPPERCASE=SIT" >> $GITHUB_ENV
-            echo "TARGET_ENV_LOWERCASE=sit" >> $GITHUB_ENV
-          elif [[ "${GITHUB_REF}" =~ ^refs/heads/release/ ]]; then
-            echo "TARGET_ENV_UPPERCASE=UAT" >> $GITHUB_ENV
-            echo "TARGET_ENV_LOWERCASE=uat" >> $GITHUB_ENV
-            if [[ "$current_version" =~ rc ]]; then
-              ./bump_version.sh rc
-            else
-              # start rc1 for the release branch
-              base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
-              release_branch_version="${GITHUB_REF#refs/heads/release/}"
-              echo "${release_branch_version}-rc1" > VERSION
-            fi
-            new_version=$(cat VERSION)
-          elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            echo "TARGET_ENV_UPPERCASE=OPS" >> $GITHUB_ENV
-            echo "TARGET_ENV_LOWERCASE=ops" >> $GITHUB_ENV
-            ./bump_version.sh release
-            new_version=$(cat VERSION)
-          fi
-
-          # Export results for later steps
-          echo "new_version=${new_version}" >> $GITHUB_ENV
+          echo "TARGET_ENV_UPPERCASE=${{ needs.versioning.outputs.TARGET_ENV_UPPERCASE }}" >> $GITHUB_ENV
+          echo "TARGET_ENV_LOWERCASE=${{ needs.versioning.outputs.TARGET_ENV_LOWERCASE }}" >> $GITHUB_ENV
+          echo "new_version=${{ needs.versioning.outputs.new_version }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -94,6 +222,9 @@ jobs:
           echo "Checking which AWS credentials are active..."
           aws sts get-caller-identity
 
+      - name: Update VERSION file
+        run: echo "${{ env.new_version }}" > VERSION
+
       - name: Quick check for changes
         id: check_changes
         if: |
@@ -106,7 +237,7 @@ jobs:
           else
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Commit Version Bump
         # If building develop, a release branch, or main then we commit the version bump back to the repo
         if: steps.check_changes.outputs.changes == 'true'
@@ -129,7 +260,19 @@ jobs:
           git tag -a "${VERSION}" -m "Version ${VERSION}"
           git push origin "${VERSION}"
 
-      - name: Set up kubeconfig and Terraform Apply
+      - name: Set up kubeconfig and Terraform Apply Karpenter
+        if: |
+          github.ref == 'refs/heads/develop' ||
+          github.ref == 'refs/heads/main'    ||
+          startsWith(github.ref, 'refs/heads/release')
+        run: |
+          terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
+          terraform validate
+          terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+          terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars
+        working-directory: terraform-karpenter
+
+      - name: Set up kubeconfig and Terraform Apply Airflow
         if: |
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
@@ -145,4 +288,3 @@ jobs:
           terraform plan -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars -var="ssl_certificate_arn=${SSL_CERTIFICATE_ARN}"
           terraform apply -auto-approve -var-file=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.tfvars -var="ssl_certificate_arn=${SSL_CERTIFICATE_ARN}"
         working-directory: terraform
-          
