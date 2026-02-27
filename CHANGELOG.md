@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 ### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+
+[0.1.1]
+### Added
 - Added in a poetry to keep track of python libraries used for airflow docker image
-- Updated docker image build 
+- Updated docker image build
 - Updated docker building in github actions with tagging
+- Locked docker image tag to old working version (temporarily)
 ### Changed
 ### Deprecated
 ### Removed
