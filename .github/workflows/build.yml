@@ -220,6 +220,9 @@ jobs:
           echo "Checking which AWS credentials are active..."
           aws sts get-caller-identity
 
+      - name: Update VERSION file
+        run: echo "${{ env.new_version }}" > VERSION
+
       - name: Quick check for changes
         id: check_changes
         if: |
@@ -232,7 +235,7 @@ jobs:
           else
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Commit Version Bump
         # If building develop, a release branch, or main then we commit the version bump back to the repo
         if: steps.check_changes.outputs.changes == 'true'
