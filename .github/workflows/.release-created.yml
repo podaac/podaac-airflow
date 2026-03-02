@@ -23,6 +23,7 @@ jobs:
         run: |
           chmod +x ./bump_version.sh
           ./bump_version.sh minor
+          ./bump_version.sh alpha
           echo "software_version=$(cat VERSION)" >> $GITHUB_ENV
       - name: Commit Version Bump
         run: |

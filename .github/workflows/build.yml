@@ -54,7 +54,7 @@ jobs:
             else
               base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
               release_branch_version="${GITHUB_REF#refs/heads/release/}"
-              echo "${release_branch_version}-rc1" > VERSION
+              echo "${release_branch_version}-rc.1" > VERSION
             fi
             new_version=$(cat VERSION)
           elif [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
@@ -66,6 +66,8 @@ jobs:
           echo "TARGET_ENV_UPPERCASE=$TARGET_ENV_UPPERCASE" >> $GITHUB_OUTPUT
           echo "TARGET_ENV_LOWERCASE=$TARGET_ENV_LOWERCASE" >> $GITHUB_OUTPUT
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+          echo "New version: $new_version"
 
   docker-build:
     needs: versioning
@@ -220,6 +222,9 @@ jobs:
           echo "Checking which AWS credentials are active..."
           aws sts get-caller-identity
 
+      - name: Update VERSION file
+        run: echo "${{ env.new_version }}" > VERSION
+
       - name: Quick check for changes
         id: check_changes
         if: |
@@ -232,7 +237,7 @@ jobs:
           else
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Commit Version Bump
         # If building develop, a release branch, or main then we commit the version bump back to the repo
         if: steps.check_changes.outputs.changes == 'true'

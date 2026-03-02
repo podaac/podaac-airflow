@@ -439,12 +439,14 @@ resource "helm_release" "airflow" {
     name  = "webserver.defaultUser.password"
     value = random_password.airflow_password.result
   }
-  timeout = 1200
+  timeout = 1500
   depends_on = [
     helm_release.keda,
     kubernetes_secret.airflow_metadata,
     kubernetes_secret.airflow_webserver,
   ]
+
+  force_update = true
 }
 
 /* Note: re-enable this to allow access via the JPL network */
