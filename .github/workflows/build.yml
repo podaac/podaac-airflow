@@ -254,8 +254,7 @@ jobs:
         if: |
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release') ||
-          github.ref == 'refs/heads/feature/fix_docker_images' 
+          startsWith(github.ref, 'refs/heads/release')
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -266,7 +265,8 @@ jobs:
         if: |
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release')
+          startsWith(github.ref, 'refs/heads/release') ||
+          github.ref == 'refs/heads/feature/fix_docker_images'
         run: |
           terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
           terraform validate
@@ -278,7 +278,8 @@ jobs:
         if: |
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release')
+          startsWith(github.ref, 'refs/heads/release') ||
+          github.ref == 'refs/heads/feature/fix_docker_images' 
         env:
           KUBECONFIG: /home/runner/.kube/config
           SSL_CERTIFICATE_ARN: ${{ secrets[format('SSL_CERTIFICATE_ARN_{0}', env.TARGET_ENV_UPPERCASE)] }}
