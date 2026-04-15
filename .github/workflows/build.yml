@@ -17,7 +17,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   POETRY_VERSION: '2.1.3'
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   versioning:
@@ -75,7 +75,7 @@ jobs:
       github.ref == 'refs/heads/develop' ||
       github.ref == 'refs/heads/main'    ||
       startsWith(github.ref, 'refs/heads/release/') ||
-      github.ref == 'refs/heads/feature/fix_docker_images' 
+      github.ref == 'refs/heads/feature/upgrade_airflow' 
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -266,7 +266,7 @@ jobs:
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
           startsWith(github.ref, 'refs/heads/release') ||
-          github.ref == 'refs/heads/feature/fix_docker_images'
+          github.ref == 'refs/heads/feature/upgrade_airflow'
         run: |
           terraform init -backend-config=tfvars/${{ env.TARGET_ENV_LOWERCASE }}.backend
           terraform validate
@@ -279,7 +279,7 @@ jobs:
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
           startsWith(github.ref, 'refs/heads/release') ||
-          github.ref == 'refs/heads/feature/fix_docker_images' 
+          github.ref == 'refs/heads/feature/upgrade_airflow' 
         env:
           KUBECONFIG: /home/runner/.kube/config
           SSL_CERTIFICATE_ARN: ${{ secrets[format('SSL_CERTIFICATE_ARN_{0}', env.TARGET_ENV_UPPERCASE)] }}

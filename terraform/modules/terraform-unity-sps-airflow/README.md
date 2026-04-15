@@ -89,6 +89,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_airflow_webserver_password"></a> [airflow\_webserver\_password](#input\_airflow\_webserver\_password) | The password for the Airflow webserver and UI. | `string` | n/a | yes |
 | <a name="input_airflow_webserver_username"></a> [airflow\_webserver\_username](#input\_airflow\_webserver\_username) | The username for the Airflow webserver and UI. | `string` | n/a | yes |
+| <a name="input_airflow_version"></a> [airflow\_version](#input\_airflow\_version) | Apache Airflow version used for Helm chart conditionals (must match the Airflow runtime in the Docker image). | `string` | n/a | yes |
 | <a name="input_db_instance_identifier"></a> [db\_instance\_identifier](#input\_db\_instance\_identifier) | The AWS DB instance identifier | `string` | n/a | yes |
 | <a name="input_db_secret_arn"></a> [db\_secret\_arn](#input\_db\_secret\_arn) | The version of the database secret in AWS Secrets Manager | `string` | n/a | yes |
 | <a name="input_docker_images"></a> [docker\_images](#input\_docker\_images) | Docker images for the associated services. | <pre>object({<br>    airflow = object({<br>      name = string<br>      tag  = string<br>    })<br>  })</pre> | n/a | yes |

@@ -6,7 +6,7 @@ set -euo pipefail
 # ----------------------------
 TAG="${1:-sit}"                 # Use first argument, default to "sit"
 IMAGE="ghcr.io/podaac/podaac-airflow:$TAG"
-EXPECTED_VERSION="2.10.5"
+EXPECTED_VERSION="3.1.0"
 
 # ----------------------------
 # Pull Docker image
@@ -40,7 +40,7 @@ fi
 echo "🔹 Testing webserver output (DB not initialized)..."
 WEB_OUTPUT=$(docker run --rm "$IMAGE" airflow webserver 2>&1 || true)
 
-if echo "$WEB_OUTPUT" | grep -q "You need to initialize the database"; then
+if echo "$WEB_OUTPUT" | grep -qi "initialize the database"; then
   echo "✅ PASS: Webserver output as expected (DB not initialized)"
 else
   echo "❌ FAIL: Unexpected webserver output"

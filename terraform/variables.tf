@@ -36,6 +36,12 @@ variable "airflow_webserver_username" {
   default     = "admin"
 }
 
+variable "airflow_version" {
+  description = "Apache Airflow version used for Helm chart conditionals (must match the Airflow runtime in the Docker image)."
+  type        = string
+  default     = "3.1.0"
+}
+
 #Removed in favor of auto-generated password
 #
 #variable "airflow_webserver_password" {
@@ -54,12 +60,12 @@ variable "helm_charts" {
     airflow = {
       repository = "https://airflow.apache.org"
       chart      = "airflow"
-      version    = "1.15.0"
+      version    = "1.19.0"
     },
     keda = {
       repository = "https://kedacore.github.io/charts"
       chart      = "keda"
-      version    = "v2.15.1"
+      version    = "v2.19.0"
     }
   }
 }
@@ -338,12 +344,12 @@ variable "installprefix" {
   default     = ""
 }
 
-variable "ssl_certificate_arn"{
+variable "ssl_certificate_arn" {
   description = "ARN of SSL cert to use (must be pre-created)"
   type        = string
 }
 
-variable "airflow_state_bucket"{
+variable "airflow_state_bucket" {
   description = "Location of Airflow state, and used for 'interim' products"
-  type = string
+  type        = string
 }

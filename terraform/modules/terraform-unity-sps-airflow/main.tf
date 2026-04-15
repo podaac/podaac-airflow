@@ -396,7 +396,7 @@ resource "random_password" "airflow_password" {
 
 # Store the password in SSM Parameter Store
 resource "aws_ssm_parameter" "web_password" {
-  name  = join("",["/",format(local.resource_name_prefix,"airflow/web/admin")])
+  name  = join("", ["/", format(local.resource_name_prefix, "airflow/web/admin")])
   type  = "SecureString"
   value = random_password.airflow_password.result
 }
@@ -411,6 +411,7 @@ resource "helm_release" "airflow" {
   values = [
     templatefile("${path.module}/../../airflow_values.yaml", {
       aws_account_id           = "${data.aws_caller_identity.current.account_id}"
+      airflow_version          = var.airflow_version
       airflow_image_repo       = var.docker_images.airflow.name
       airflow_image_tag        = var.docker_images.airflow.tag
       kubernetes_namespace     = data.kubernetes_namespace.service_area.metadata[0].name
