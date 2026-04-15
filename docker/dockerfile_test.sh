@@ -12,7 +12,7 @@ EXPECTED_VERSION="3.1.0"
 # Pull Docker image
 # ----------------------------
 echo "🔹 Pulling Docker image '$IMAGE' (no local cache)..."
-# docker rmi "$IMAGE" >/dev/null 2>&1 || true
+docker rmi "$IMAGE" >/dev/null 2>&1 || true
 docker pull "$IMAGE"
 
 # ----------------------------
@@ -64,7 +64,7 @@ echo "🔹 Testing webserver command..."
 
 # Airflow 3.x output/exit behavior can differ depending on config and DB state.
 # The most stable smoke-test is verifying the CLI wiring for the webserver command.
-if ! docker run --rm "$IMAGE" airflow webserver --help >/dev/null 2>&1; then
+if ! docker run --rm "$IMAGE" airflow api-server --help >/dev/null 2>&1; then
   echo "❌ FAIL: 'airflow api-server --help' failed"
   docker run --rm -p 8080:8080 "$IMAGE" bash -c "airflow db migrate && airflow api-server --help"
   exit 1
