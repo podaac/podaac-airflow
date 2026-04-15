@@ -74,7 +74,8 @@ jobs:
     if: |
       github.ref == 'refs/heads/develop' ||
       github.ref == 'refs/heads/main'    ||
-      startsWith(github.ref, 'refs/heads/release/')
+      startsWith(github.ref, 'refs/heads/release/') ||
+      github.ref == 'refs/heads/feature/fix_docker_images' 
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -253,7 +254,8 @@ jobs:
         if: |
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release')
+          startsWith(github.ref, 'refs/heads/release') ||
+          github.ref == 'refs/heads/feature/fix_docker_images' 
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
