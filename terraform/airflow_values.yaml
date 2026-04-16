@@ -1522,7 +1522,7 @@ ports:
   pgbouncer: 6543
   pgbouncerScrape: 9127
   # rpcServer support is experimental / dev purpose only and will later be renamed
-  _rpcServer: 9080
+  #_rpcServer: 9080
 
 # Define any ResourceQuotas for namespace
 quotas: {}
