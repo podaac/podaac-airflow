@@ -834,11 +834,11 @@ scheduler:
 
 
 createUserJob:
-  useHelmHooks: false
-  applyCustomEnv: false
+  useHelmHooks: true
+  applyCustomEnv: true
 migrateDatabaseJob:
-  useHelmHooks: false
-  applyCustomEnv: false
+  useHelmHooks: true
+  applyCustomEnv: true
 
 # rpcServer support is experimental / dev purpose only and will later be renamed
 _rpcServer:
