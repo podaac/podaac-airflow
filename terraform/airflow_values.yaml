@@ -946,6 +946,7 @@ _rpcServer:
 
 # Airflow webserver settings
 webserver:
+  command: ["airflow", "api-server"]
   replicas: 2
 
   # # Issue 404: DISABLE AIRRLOW AUTHENTICATION (https://github.com/unity-sds/unity-sps/issues/404)
