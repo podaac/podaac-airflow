@@ -13,12 +13,12 @@ helm_charts = {
   "airflow": {
     "chart": "airflow",
     "repository": "https://airflow.apache.org",
-    "version": "1.15.0"
+    "version": "1.19.0"
   },
   "keda": {
     "chart": "keda",
     "repository": "https://kedacore.github.io/charts",
-    "version": "v2.15.1"
+    "version": "v2.19.0"
   }
 }
 
