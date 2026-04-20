@@ -441,6 +441,7 @@ resource "helm_release" "airflow" {
     value = random_password.airflow_password.result
   }
   timeout = 1500
+  wait = false
   depends_on = [
     helm_release.keda,
     kubernetes_secret.airflow_metadata,
@@ -544,7 +545,7 @@ resource "kubernetes_ingress_v1" "airflow_ingress" {
           path_type = "Prefix"
           backend {
             service {
-              name = "airflow-podaac-webserver"
+              name = "airflow-podaac-api-server"
               port {
                 number = 8080
               }

@@ -51,3 +51,5 @@ tags = {
 
 # this should match what you did the `terraform init backend=` step with
 airflow_state_bucket = "podaac-sit-services-airlfow"
+
+ssl_certificate_arn = "arn:aws:acm:us-west-2:206226843404:certificate/a1a0282d-ea62-44d8-9d4d-eb9c69a88dd0"

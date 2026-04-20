@@ -530,6 +530,8 @@ kerberos:
 
 # Airflow Worker Config
 workers:
+  waitForMigrations:
+    enabled: false
   nodeSelector:
     "karpenter.sh/nodepool": "airflow-celery-workers"
   affinity:
@@ -592,6 +594,8 @@ workers:
 
 # Airflow scheduler settings
 scheduler:
+  waitForMigrations:
+    enabled: false
   replicas: 2
   nodeSelector:
     "karpenter.sh/nodepool": "airflow-core-components"
@@ -946,6 +950,8 @@ _rpcServer:
 
 # Airflow webserver settings
 webserver:
+  waitForMigrations:
+    enabled: false
   command: ["airflow", "api-server"]
   replicas: 2
 
@@ -993,6 +999,8 @@ webserver:
 
 # Airflow Triggerer Config
 triggerer:
+  waitForMigrations:
+    enabled: false
   keda:
     enabled: true
     minReplicaCount: 1
