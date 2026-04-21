@@ -97,7 +97,6 @@ def has_ec2_instances_in_cluster(**context):
 
 with DAG(
     dag_id="podaac_ecs_cloud_optimized_generator_cold_start",
-    schedule=None,
     start_date=datetime(2021, 1, 1),
     tags=["aws", "ecs", "cloud-optimized"],
     params={'collection_id': 'default_value', 'loadable_coordinate_variables': 'lat,lon,time', 'output_bucket': 'podaac-sit-services-cloud-optimizer',
