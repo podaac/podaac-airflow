@@ -6,7 +6,7 @@ set -euo pipefail
 # ----------------------------
 TAG="${1:-sit}"                 # Use first argument, default to "sit"
 IMAGE="ghcr.io/podaac/podaac-airflow:$TAG"
-EXPECTED_VERSION="3.1.8"
+EXPECTED_VERSION="3.2.1"
 
 # ----------------------------
 # Pull Docker image

@@ -320,6 +320,13 @@ env:
     value: ${unity_venue}
   - name: "AIRFLOW_VAR_PROCESS_OUTPUTS"
     value: ${airflow_state_bucket}
+  - name: "AIRFLOW__API__AUTH_BACKENDS"
+    value: "airflow.api.auth.backend.basic_auth"
+  - name: "AWS_DEFAULT_REGION"
+    value: "us-west-2"    
+  - name: "AIRFLOW_CONN_AWS_DEFAULT"
+    value: "aws://"
+
 
 # Volumes for all airflow containers
 volumes: []
@@ -841,6 +848,7 @@ createUserJob:
   useHelmHooks: true
   applyCustomEnv: true
 migrateDatabaseJob:
+  enabled: false
   useHelmHooks: true
   applyCustomEnv: true
 
@@ -899,7 +907,7 @@ _rpcServer:
 
   waitForMigrations:
     # Whether to create init container to wait for db migrations
-    enabled: true
+    enabled: false
     env: []
     # Detailed default security context for waitForMigrations for container level
     securityContexts:
@@ -950,9 +958,19 @@ _rpcServer:
 
 # Airflow webserver settings
 webserver:
+
+  extraVolumeMounts:
+    - name: dags  # <--- Use the exact name the Scheduler uses
+      mountPath: /opt/airflow/dags
+
+  defaultUser:
+      enabled: false 
+
   waitForMigrations:
     enabled: false
+
   command: ["airflow", "api-server"]
+
   replicas: 2
 
   # # Issue 404: DISABLE AIRRLOW AUTHENTICATION (https://github.com/unity-sds/unity-sps/issues/404)
@@ -1158,7 +1176,7 @@ dagProcessor:
 
   waitForMigrations:
     # Whether to create init container to wait for db migrations
-    enabled: true
+    enabled: false
     env: []
     # Detailed default security context for waitForMigrations for container level
     securityContexts:
@@ -1707,18 +1725,19 @@ podTemplate: ~
 dags:
   persistence:
     # Enable persistent volume for storing dags
-    enabled: true
+    enabled: false
     # the name of an existing PVC to use
-    existingClaim: ${dags_pvc_name}
+    #existingClaim: ${dags_pvc_name}
+    existingClaim: ""
 
   gitSync:
-    enabled: true
+    enabled: false
     
     # git repo clone url
     # ssh example: git@github.com:apache/airflow.git
     # https example: https://github.com/apache/airflow.git
     repo: https://github.com/podaac/airflow-dags.git
-    branch: develop
+    branch: sit
     # The git revision (branch, tag, or hash) to check out, v4 only
     depth: 1
     # the number of consecutive failures allowed before aborting

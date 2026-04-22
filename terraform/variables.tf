@@ -39,7 +39,7 @@ variable "airflow_webserver_username" {
 variable "airflow_version" {
   description = "Apache Airflow version used for Helm chart conditionals (must match the Airflow runtime in the Docker image)."
   type        = string
-  default     = "3.1.0"
+  default     = "3.2.8"
 }
 
 #Removed in favor of auto-generated password

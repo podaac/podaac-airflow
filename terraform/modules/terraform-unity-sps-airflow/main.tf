@@ -440,6 +440,15 @@ resource "helm_release" "airflow" {
     name  = "webserver.defaultUser.password"
     value = random_password.airflow_password.result
   }
+  set {
+    name  = "createUserJob.enabled"
+    value = "false"
+  }
+  set {
+    name  = "webserver.defaultUser.enabled"
+    value = "false"
+  }
+
   timeout = 1500
   wait = false
   depends_on = [
