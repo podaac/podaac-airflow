@@ -1725,13 +1725,13 @@ podTemplate: ~
 dags:
   persistence:
     # Enable persistent volume for storing dags
-    enabled: true
+    enabled: false
     # the name of an existing PVC to use
-    existingClaim: ${dags_pvc_name}
-    #existingClaim: ""
+    #existingClaim: ${dags_pvc_name}
+    existingClaim: ""
 
   gitSync:
-    enabled: true
+    enabled: false
     
     # git repo clone url
     # ssh example: git@github.com:apache/airflow.git
