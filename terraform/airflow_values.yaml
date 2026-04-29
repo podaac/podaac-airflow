@@ -636,7 +636,16 @@ scheduler:
         component: scheduler
   labels:
     component: scheduler
-  env: []
+  env : []
+
+  containerLifecycleHooks:
+    postStart:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - "nohup sh -c 'while true; do sleep 60 && airflow dags reserialize; done' > /dev/null 2>&1 &"
+
 #  env: [
 # 	  {name: "AIRFLOW__LOGGING__LOGGING_LEVEL",
 #          value: "DEBUG"
@@ -1667,6 +1676,8 @@ config:
     worker_concurrency: 16
   scheduler:
     standalone_dag_processor: '{{ ternary "True" "False" .Values.dagProcessor.enabled }}'
+    dag_dir_list_interval: '60'
+    min_file_process_interval: '15'
   elasticsearch:
     json_format: 'True'
     log_id_template: "{dag_id}_{task_id}_{execution_date}_{try_number}"
@@ -1690,6 +1701,7 @@ config:
     multi_namespace_mode: '{{ ternary "True" "False" .Values.multiNamespaceMode }}'
   triggerer:
     default_capacity: 1000
+
 # yamllint enable rule:line-length
 
 # Whether Airflow can launch workers and/or pods in multiple namespaces
@@ -1725,7 +1737,7 @@ podTemplate: ~
 dags:
   persistence:
     # Enable persistent volume for storing dags
-    enabled: true
+    enabled: false
     # the name of an existing PVC to use
     existingClaim: ${dags_pvc_name}
     #existingClaim: ""
