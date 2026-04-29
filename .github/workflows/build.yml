@@ -11,6 +11,15 @@ on:
       - 'issues/**'
       - 'dependabot/**'
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - sit
+          - uat
+          - ops
 
 env:
   TERRAFORM_VERSION: '1.8.5'
@@ -35,7 +44,23 @@ jobs:
           chmod +x ./bump_version.sh
           current_version=$(cat VERSION)
           echo "Current version: $current_version"
-          if [[ "${GITHUB_REF}" =~ ^refs/heads/(issue|feature|dependabot)/ ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            case "${{ github.event.inputs.target_env }}" in
+              sit)
+                TARGET_ENV_UPPERCASE=SIT
+                TARGET_ENV_LOWERCASE=sit
+                ;;
+              uat)
+                TARGET_ENV_UPPERCASE=UAT
+                TARGET_ENV_LOWERCASE=uat
+                ;;
+              ops)
+                TARGET_ENV_UPPERCASE=OPS
+                TARGET_ENV_LOWERCASE=ops
+                ;;
+            esac
+            new_version="$TARGET_ENV_LOWERCASE"
+          elif [[ "${GITHUB_REF}" =~ ^refs/heads/(issue|feature|dependabot)/ ]]; then
             TIMESTAMP=$(date -u +"%Y%m%d%H%M")
             base_version=$(echo "$current_version" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
             new_version="${base_version}-alpha.${TIMESTAMP}"
@@ -72,6 +97,7 @@ jobs:
   docker-build:
     needs: versioning
     if: |
+      github.event_name == 'workflow_dispatch' ||
       github.ref == 'refs/heads/develop' ||
       github.ref == 'refs/heads/main'    ||
       startsWith(github.ref, 'refs/heads/release/')
@@ -240,7 +266,7 @@ jobs:
 
       - name: Commit Version Bump
         # If building develop, a release branch, or main then we commit the version bump back to the repo
-        if: steps.check_changes.outputs.changes == 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.check_changes.outputs.changes == 'true'
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -251,9 +277,12 @@ jobs:
         env:
           VERSION: ${{ env.new_version }}
         if: |
-          github.ref == 'refs/heads/develop' ||
-          github.ref == 'refs/heads/main'    ||
-          startsWith(github.ref, 'refs/heads/release')
+          github.event_name != 'workflow_dispatch' &&
+          (
+            github.ref == 'refs/heads/develop' ||
+            github.ref == 'refs/heads/main' ||
+            startsWith(github.ref, 'refs/heads/release')
+          )
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -262,6 +291,7 @@ jobs:
 
       - name: Set up kubeconfig and Terraform Apply Karpenter
         if: |
+          github.event_name == 'workflow_dispatch' ||
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
           startsWith(github.ref, 'refs/heads/release')
@@ -274,6 +304,7 @@ jobs:
 
       - name: Set up kubeconfig and Terraform Apply Airflow
         if: |
+          github.event_name == 'workflow_dispatch' ||
           github.ref == 'refs/heads/develop' ||
           github.ref == 'refs/heads/main'    ||
           startsWith(github.ref, 'refs/heads/release')
