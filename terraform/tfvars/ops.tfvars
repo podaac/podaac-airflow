@@ -2,7 +2,7 @@
 airflow_docker_images = {
   "airflow": {
     "name": "ghcr.io/podaac/podaac-airflow",
-    "tag": "ops"
+    "tag": "sit"
   }
 }
 
@@ -13,12 +13,12 @@ helm_charts = {
   "airflow": {
     "chart": "airflow",
     "repository": "https://airflow.apache.org",
-    "version": "1.15.0"
+    "version": "1.19.0"
   },
   "keda": {
     "chart": "keda",
     "repository": "https://kedacore.github.io/charts",
-    "version": "v2.15.1"
+    "version": "v2.19.0"
   }
 }
 
@@ -51,3 +51,5 @@ tags = {
 
 # this should match what you did the `terraform init backend=` step with
 airflow_state_bucket = "podaac-ops-services-airflow"
+
+dags_git_sync_branch = "main"

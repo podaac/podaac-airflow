@@ -53,4 +53,5 @@ module "unity-sps-airflow" {
   helm_charts                = var.helm_charts
   ssl_certificate_arn        = var.ssl_certificate_arn
   airflow_state_bucket       = var.airflow_state_bucket
+  dags_git_sync_branch       = local.dags_git_sync_branch
 }

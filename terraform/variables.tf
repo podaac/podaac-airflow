@@ -353,3 +353,9 @@ variable "airflow_state_bucket" {
   description = "Location of Airflow state, and used for 'interim' products"
   type        = string
 }
+
+variable "dags_git_sync_branch" {
+  description = "The git branch to sync DAGs from. Defaults to the venue name, except ops which defaults to main."
+  type        = string
+  default     = ""
+}

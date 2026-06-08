@@ -23,6 +23,11 @@ variable "airflow_version" {
   type        = string
 }
 
+variable "dags_git_sync_branch" {
+  description = "The git branch to sync DAGs from (typically matches the deployment environment)."
+  type        = string
+}
+
 variable "kubernetes_namespace" {
   description = "The kubernetes namespace for Airflow resources."
   type        = string

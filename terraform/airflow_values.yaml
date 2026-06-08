@@ -968,9 +968,9 @@ _rpcServer:
 # Airflow webserver settings
 webserver:
 
-  extraVolumeMounts:
-    - name: dags  # <--- Use the exact name the Scheduler uses
-      mountPath: /opt/airflow/dags
+  #extraVolumeMounts:
+  #  - name: dags  # <--- Use the exact name the Scheduler uses
+  #    mountPath: /opt/airflow/dags
 
   defaultUser:
       enabled: false 
@@ -1749,7 +1749,7 @@ dags:
     # ssh example: git@github.com:apache/airflow.git
     # https example: https://github.com/apache/airflow.git
     repo: https://github.com/podaac/airflow-dags.git
-    branch: sit
+    branch: ${dags_git_sync_branch}
     # The git revision (branch, tag, or hash) to check out, v4 only
     depth: 1
     # the number of consecutive failures allowed before aborting
