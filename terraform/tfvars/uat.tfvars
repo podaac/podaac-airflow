@@ -2,7 +2,7 @@
 airflow_docker_images = {
   "airflow": {
     "name": "ghcr.io/podaac/podaac-airflow",
-    "tag": "sit"
+    "tag": "uat"
   }
 }
 
