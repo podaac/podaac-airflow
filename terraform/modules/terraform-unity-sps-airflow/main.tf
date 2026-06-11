@@ -396,7 +396,7 @@ resource "random_password" "airflow_password" {
 
 # Store the password in SSM Parameter Store
 resource "aws_ssm_parameter" "web_password" {
-  name  = join("",["/",format(local.resource_name_prefix,"airflow/web/admin")])
+  name  = join("", ["/", format(local.resource_name_prefix, "airflow/web/admin")])
   type  = "SecureString"
   value = random_password.airflow_password.result
 }
@@ -411,6 +411,7 @@ resource "helm_release" "airflow" {
   values = [
     templatefile("${path.module}/../../airflow_values.yaml", {
       aws_account_id           = "${data.aws_caller_identity.current.account_id}"
+      airflow_version          = var.airflow_version
       airflow_image_repo       = var.docker_images.airflow.name
       airflow_image_tag        = var.docker_images.airflow.tag
       kubernetes_namespace     = data.kubernetes_namespace.service_area.metadata[0].name
@@ -429,6 +430,7 @@ resource "helm_release" "airflow" {
       unity_venue              = var.venue
       unity_cluster_name       = data.aws_eks_cluster.cluster.name
       cwl_dag_ecr_uri          = "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-west-2.amazonaws.com"
+      dags_git_sync_branch     = var.dags_git_sync_branch
     })
   ]
   set_sensitive {
@@ -439,7 +441,17 @@ resource "helm_release" "airflow" {
     name  = "webserver.defaultUser.password"
     value = random_password.airflow_password.result
   }
+  set {
+    name  = "createUserJob.enabled"
+    value = "false"
+  }
+  set {
+    name  = "webserver.defaultUser.enabled"
+    value = "false"
+  }
+
   timeout = 1500
+  wait = false
   depends_on = [
     helm_release.keda,
     kubernetes_secret.airflow_metadata,
@@ -543,7 +555,7 @@ resource "kubernetes_ingress_v1" "airflow_ingress" {
           path_type = "Prefix"
           backend {
             service {
-              name = "airflow-podaac-webserver"
+              name = "airflow-podaac-api-server"
               port {
                 number = 8080
               }
