@@ -319,11 +319,7 @@ env:
   - name: "VENUE"
     value: ${unity_venue}
   - name: "AIRFLOW_VAR_PROCESS_OUTPUTS"
-    value: ${airflow_state_bucket}
-  - name: "AIRFLOW__API__AUTH_BACKENDS"
-    value: "airflow.api.auth.backend.basic_auth"
-  - name: "AWS_DEFAULT_REGION"
-    value: "us-west-2"    
+    value: ${airflow_state_bucket} 
   - name: "AIRFLOW_CONN_AWS_DEFAULT"
     value: "aws://"
 
@@ -636,7 +632,7 @@ scheduler:
         component: scheduler
   labels:
     component: scheduler
-  env : []
+  env: []
 
   containerLifecycleHooks:
     postStart:

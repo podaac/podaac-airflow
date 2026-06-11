@@ -13,5 +13,5 @@ docker image inspect "$IMAGE" > /dev/null
 echo "🔹 Testing airflow version..."
 docker run --rm "$IMAGE" airflow version
 
-echo "🔹 Initializing DB and starting Airflow API server on http://localhost:8080/docs..."
+echo "🔹 Initializing DB and testing Airflow API server command."
 docker run --rm -p 8080:8080 "$IMAGE" bash -c "airflow db migrate && airflow api-server --help"
