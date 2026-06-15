@@ -319,7 +319,11 @@ env:
   - name: "VENUE"
     value: ${unity_venue}
   - name: "AIRFLOW_VAR_PROCESS_OUTPUTS"
-    value: ${airflow_state_bucket} 
+    value: ${airflow_state_bucket}
+  - name: "AIRFLOW__API__AUTH_BACKENDS"
+    value: "airflow.api.auth.backend.basic_auth"
+  - name: "AWS_DEFAULT_REGION"
+    value: "us-west-2"    
   - name: "AIRFLOW_CONN_AWS_DEFAULT"
     value: "aws://"
 
@@ -633,15 +637,6 @@ scheduler:
   labels:
     component: scheduler
   env: []
-
-  containerLifecycleHooks:
-    postStart:
-      exec:
-        command:
-          - /bin/sh
-          - -c
-          - "nohup sh -c 'while true; do sleep 60 && airflow dags reserialize; done' > /dev/null 2>&1 &"
-
 #  env: [
 # 	  {name: "AIRFLOW__LOGGING__LOGGING_LEVEL",
 #          value: "DEBUG"
@@ -964,9 +959,9 @@ _rpcServer:
 # Airflow webserver settings
 webserver:
 
-  #extraVolumeMounts:
-  #  - name: dags  # <--- Use the exact name the Scheduler uses
-  #    mountPath: /opt/airflow/dags
+  extraVolumeMounts:
+    - name: dags  # <--- Use the exact name the Scheduler uses
+      mountPath: /opt/airflow/dags
 
   defaultUser:
       enabled: false 
@@ -1672,8 +1667,6 @@ config:
     worker_concurrency: 16
   scheduler:
     standalone_dag_processor: '{{ ternary "True" "False" .Values.dagProcessor.enabled }}'
-    dag_dir_list_interval: '60'
-    min_file_process_interval: '15'
   elasticsearch:
     json_format: 'True'
     log_id_template: "{dag_id}_{task_id}_{execution_date}_{try_number}"
@@ -1697,7 +1690,6 @@ config:
     multi_namespace_mode: '{{ ternary "True" "False" .Values.multiNamespaceMode }}'
   triggerer:
     default_capacity: 1000
-
 # yamllint enable rule:line-length
 
 # Whether Airflow can launch workers and/or pods in multiple namespaces
@@ -1735,17 +1727,17 @@ dags:
     # Enable persistent volume for storing dags
     enabled: false
     # the name of an existing PVC to use
-    existingClaim: ${dags_pvc_name}
-    #existingClaim: ""
+    #existingClaim: ${dags_pvc_name}
+    existingClaim: ""
 
   gitSync:
-    enabled: true
+    enabled: false
     
     # git repo clone url
     # ssh example: git@github.com:apache/airflow.git
     # https example: https://github.com/apache/airflow.git
     repo: https://github.com/podaac/airflow-dags.git
-    branch: ${dags_git_sync_branch}
+    branch: sit
     # The git revision (branch, tag, or hash) to check out, v4 only
     depth: 1
     # the number of consecutive failures allowed before aborting

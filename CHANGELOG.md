@@ -13,6 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Security
 
+[0.2.0]
+### Added
+- Updated Airflow to version 3.2.1
+- Building own airflow Docker image now
+- Updated poetry version to 2.3.2
+- Updated dependency versions
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
 
 [0.1.1]
 ### Added

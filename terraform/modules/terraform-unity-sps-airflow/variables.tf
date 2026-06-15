@@ -18,6 +18,16 @@ variable "release" {
   type        = string
 }
 
+variable "airflow_version" {
+  description = "Apache Airflow version used for Helm chart conditionals (must match the Airflow runtime in the Docker image)."
+  type        = string
+}
+
+variable "dags_git_sync_branch" {
+  description = "The git branch to sync DAGs from (typically matches the deployment environment)."
+  type        = string
+}
+
 variable "kubernetes_namespace" {
   description = "The kubernetes namespace for Airflow resources."
   type        = string
@@ -67,13 +77,13 @@ variable "docker_images" {
   })
 }
 
-variable "ssl_certificate_arn"{
+variable "ssl_certificate_arn" {
   description = "SSL certificate arn to use for load balancer"
   type        = string
 }
 
-variable "airflow_state_bucket"{
-  type = string
+variable "airflow_state_bucket" {
+  type        = string
   description = "state bucket used for interim products"
 }
 

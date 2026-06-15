@@ -42,6 +42,7 @@ module "unity-sps-airflow" {
   venue                      = var.venue
   service_area               = var.service_area
   release                    = var.release
+  airflow_version            = var.airflow_version
   kubeconfig_filepath        = var.kubeconfig_filepath
   kubernetes_namespace       = kubernetes_namespace.service_area.metadata[0].name
   db_instance_identifier     = module.unity-sps-database.db_instance_identifier
@@ -52,4 +53,5 @@ module "unity-sps-airflow" {
   helm_charts                = var.helm_charts
   ssl_certificate_arn        = var.ssl_certificate_arn
   airflow_state_bucket       = var.airflow_state_bucket
+  dags_git_sync_branch       = local.dags_git_sync_branch
 }
